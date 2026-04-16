@@ -2,653 +2,1276 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DriveBuddy Admin — Driver Management</title>
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DriveBuddy — Driver App</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Figtree:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-<!-- ═══════════════════════════════════════════
-     FIREBASE — Same config as your main site
-═══════════════════════════════════════════ -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script>
   firebase.initializeApp({
-  apiKey: "AIzaSyDjkG40JGorJDq0XN25pg_S08L8GLbw3EU",
-  authDomain: "drive-buddy-b967d.firebaseapp.com",
-  projectId: "drive-buddy-b967d",
-  storageBucket: "drive-buddy-b967d.firebasestorage.app",
-  messagingSenderId: "82991557282",
-  appId: "1:82991557282:web:851c141add9dcc6d1705fb"  });
-  const db = firebase.database();
+    apiKey:            "AIzaSyDjkG40JGorJDq0XN25pg_S08L8GLbw3EU",
+    authDomain:        "drive-buddy-b967d.firebaseapp.com",
+    databaseURL:       "https://drive-buddy-b967d-default-rtdb.firebaseio.com",
+    projectId:         "drive-buddy-b967d",
+    storageBucket:     "drive-buddy-b967d.firebasestorage.app",
+    messagingSenderId: "82991557282",
+    appId:             "1:82991557282:web:851c141add9dcc6d1705fb"
+  });
+  const db      = firebase.database();
+  const storage = firebase.storage();
 </script>
 
 <style>
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-html{font-size:16px;-webkit-font-smoothing:antialiased}
+/* ════════════════════════════════════
+   RESET & BASE
+════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{font-size:16px;height:100%;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{
+  font-family:'Figtree',sans-serif;
+  background:#0A0910;
+  color:#F0E8D6;
+  min-height:100%;
+  min-height:100svh;
+  overflow-x:hidden;
+  line-height:1.5;
+}
+input,select,textarea,button{font-family:inherit;outline:none}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+
+/* ════════════════════════════════════
+   CSS VARS
+════════════════════════════════════ */
 :root{
-  --bg:#0D0C10;--surface:#161520;--surface2:#1E1C28;--border:#2A2740;
-  --gold:#C9993A;--gold-dim:rgba(201,153,58,0.12);--gold-rim:rgba(201,153,58,0.25);
-  --cream:#F2EAD8;--muted:rgba(242,234,216,0.45);--dim:rgba(242,234,216,0.2);
-  --green:#2DBB74;--green-dim:rgba(45,187,116,0.12);--green-rim:rgba(45,187,116,0.3);
-  --amber:#F59E0B;--amber-dim:rgba(245,158,11,0.12);--amber-rim:rgba(245,158,11,0.3);
-  --red:#EF4444;--red-dim:rgba(239,68,68,0.12);--red-rim:rgba(239,68,68,0.3);
-  --blue:#3B82F6;--blue-dim:rgba(59,130,246,0.12);--blue-rim:rgba(59,130,246,0.3);
-  --sans:'Figtree',sans-serif;--mono:'DM Mono',monospace;
+  --bg:#0A0910;
+  --surface:#141220;
+  --surface2:#1C1A2A;
+  --surface3:#252338;
+  --border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.12);
+  --gold:#C9993A;
+  --gold2:#E5B355;
+  --gold-dim:rgba(201,153,58,0.12);
+  --gold-rim:rgba(201,153,58,0.28);
+  --cream:#F0E8D6;
+  --cream60:rgba(240,232,214,0.6);
+  --cream30:rgba(240,232,214,0.3);
+  --cream15:rgba(240,232,214,0.12);
+  --green:#22C55E;
+  --green-dim:rgba(34,197,94,0.12);
+  --green-rim:rgba(34,197,94,0.3);
+  --red:#EF4444;
+  --red-dim:rgba(239,68,68,0.12);
+  --red-rim:rgba(239,68,68,0.3);
+  --blue:#60A5FA;
+  --serif:'Cormorant Garamond',serif;
+  --mono:'DM Mono',monospace;
   --ease:cubic-bezier(0.22,1,0.36,1);
 }
-body{background:var(--bg);color:var(--cream);font-family:var(--sans);min-height:100vh;line-height:1.5}
 
-/* ── LOGIN GATE ── */
-#loginGate{
-  position:fixed;inset:0;z-index:9999;
-  background:var(--bg);display:flex;align-items:center;justify-content:center;
-}
-.login-box{
-  background:var(--surface);border:1px solid var(--border);border-radius:20px;
-  padding:2.5rem 2rem;width:100%;max-width:360px;text-align:center;
-}
-.login-logo{font-size:2.5rem;margin-bottom:0.8rem}
-.login-title{font-size:1.3rem;font-weight:700;color:var(--cream);margin-bottom:0.3rem}
-.login-sub{font-size:0.8rem;color:var(--muted);margin-bottom:2rem}
-.login-input{
-  width:100%;background:var(--surface2);border:1px solid var(--border);
-  border-radius:10px;padding:0.85rem 1rem;color:var(--cream);font-family:var(--sans);
-  font-size:0.9rem;outline:none;margin-bottom:0.8rem;text-align:center;
-  letter-spacing:0.1em;
-}
-.login-input:focus{border-color:var(--gold-rim)}
-.login-btn{
-  width:100%;background:var(--gold);color:#08070A;border:none;border-radius:10px;
-  padding:0.9rem;font-family:var(--sans);font-size:0.95rem;font-weight:700;
-  cursor:pointer;transition:background 0.2s;
-}
-.login-btn:hover{background:#E5B355}
-.login-err{font-size:0.78rem;color:var(--red);margin-top:0.5rem;display:none}
+/* ════════════════════════════════════
+   SCREENS — only one visible at a time
+════════════════════════════════════ */
+.screen{display:none;min-height:100svh;flex-direction:column}
+.screen.active{display:flex}
 
-/* ── APP ── */
-#app{display:none;min-height:100vh}
+/* ════════════════════════════════════
+   LOADING SCREEN
+════════════════════════════════════ */
+#s-loading{
+  align-items:center;justify-content:center;
+  background:var(--bg);
+}
+.loading-logo{
+  display:flex;flex-direction:column;align-items:center;gap:1rem;
+  animation:fadeUp 0.6s var(--ease) both;
+}
+.loading-icon{
+  width:72px;height:72px;
+  background:var(--gold-dim);border:1px solid var(--gold-rim);
+  border-radius:22px;display:flex;align-items:center;justify-content:center;
+  font-size:2rem;
+}
+.loading-wordmark{font-family:var(--serif);font-size:2rem;font-weight:700;color:var(--cream)}
+.loading-wordmark span{color:var(--gold)}
+.loading-sub{font-family:var(--mono);font-size:0.65rem;color:var(--cream30);letter-spacing:0.18em;text-transform:uppercase;margin-top:0.2rem}
+.loading-spinner{
+  width:36px;height:36px;border-radius:50%;
+  border:2px solid var(--gold-rim);
+  border-top-color:var(--gold);
+  animation:spin 0.9s linear infinite;
+  margin-top:2rem;
+}
 
-/* ── TOPBAR ── */
-.topbar{
-  background:var(--surface);border-bottom:1px solid var(--border);
-  padding:0.9rem 1.5rem;display:flex;align-items:center;justify-content:space-between;
-  position:sticky;top:0;z-index:100;
-}
-.topbar-brand{display:flex;align-items:center;gap:0.6rem}
-.topbar-logo{width:36px;height:36px;background:var(--gold-dim);border:1px solid var(--gold-rim);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
-.topbar-name{font-size:1rem;font-weight:700;color:var(--cream)}
-.topbar-name span{color:var(--gold)}
-.topbar-right{display:flex;align-items:center;gap:1rem}
-.topbar-time{font-family:var(--mono);font-size:0.75rem;color:var(--muted)}
-.logout-btn{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:0.4rem 0.8rem;font-size:0.78rem;cursor:pointer;font-family:var(--sans);transition:color 0.2s,border-color 0.2s}
-.logout-btn:hover{color:var(--cream);border-color:var(--cream)}
-
-/* ── STATS BAR ── */
-.stats-bar{
-  display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
-  background:var(--border);border-bottom:1px solid var(--border);
-}
-.stat-box{
-  background:var(--surface);padding:1rem 1.5rem;text-align:center;
-}
-.stat-box .sv{font-size:1.8rem;font-weight:700;font-family:var(--mono);line-height:1;margin-bottom:0.2rem}
-.stat-box .sl{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em}
-.sv.green{color:var(--green)}
-.sv.amber{color:var(--amber)}
-.sv.red{color:var(--red)}
-.sv.blue{color:var(--blue)}
-
-/* ── MAIN LAYOUT ── */
-.main{padding:1.5rem;max-width:1400px;margin:0 auto}
-
-/* ── TOOLBAR ── */
-.toolbar{
-  display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem;flex-wrap:wrap;
-}
-.toolbar-title{font-size:1.1rem;font-weight:700;color:var(--cream);flex:1}
-.search-box{
-  background:var(--surface);border:1px solid var(--border);border-radius:10px;
-  padding:0.6rem 1rem;color:var(--cream);font-family:var(--sans);font-size:0.85rem;
-  outline:none;width:220px;transition:border-color 0.2s;
-}
-.search-box::placeholder{color:var(--dim)}
-.search-box:focus{border-color:var(--gold-rim)}
-.filter-btn{
-  background:var(--surface);border:1px solid var(--border);border-radius:8px;
-  padding:0.6rem 0.9rem;color:var(--muted);font-size:0.8rem;cursor:pointer;
-  font-family:var(--sans);transition:all 0.2s;white-space:nowrap;
-}
-.filter-btn:hover,.filter-btn.active{background:var(--gold-dim);border-color:var(--gold-rim);color:var(--gold)}
-.add-btn{
-  background:var(--gold);color:#08070A;border:none;border-radius:8px;
-  padding:0.6rem 1.1rem;font-size:0.85rem;font-weight:700;cursor:pointer;
-  display:flex;align-items:center;gap:0.4rem;font-family:var(--sans);
-  transition:background 0.2s;white-space:nowrap;
-}
-.add-btn:hover{background:#E5B355}
-
-/* ── CITY TABS ── */
-.city-tabs{display:flex;gap:0.5rem;margin-bottom:1.2rem;flex-wrap:wrap}
-.city-tab{
-  padding:0.45rem 1rem;border-radius:20px;font-size:0.8rem;font-weight:600;
-  cursor:pointer;transition:all 0.2s;border:1px solid var(--border);
-  background:var(--surface);color:var(--muted);
-}
-.city-tab:hover{border-color:var(--gold-rim);color:var(--cream)}
-.city-tab.active{background:var(--gold-dim);border-color:var(--gold-rim);color:var(--gold)}
-
-/* ── DRIVER GRID ── */
-.driver-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
-
-/* ── DRIVER CARD ── */
-.driver-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:16px;
-  padding:1.2rem;transition:border-color 0.2s,transform 0.2s;
+/* ════════════════════════════════════
+   WELCOME SCREEN
+════════════════════════════════════ */
+#s-welcome{
+  background:var(--bg);
   position:relative;overflow:hidden;
 }
-.driver-card:hover{border-color:rgba(201,153,58,0.2);transform:translateY(-2px)}
-.driver-card.available{border-left:3px solid var(--green)}
-.driver-card.on-trip{border-left:3px solid var(--amber)}
-.driver-card.offline{border-left:3px solid var(--red);opacity:0.7}
-
-.dc-top{display:flex;align-items:flex-start;gap:0.9rem;margin-bottom:1rem}
-.dc-avatar{
-  width:46px;height:46px;border-radius:50%;flex-shrink:0;
+.welcome-glow{
+  position:absolute;top:-20%;left:50%;transform:translateX(-50%);
+  width:500px;height:500px;
+  background:radial-gradient(circle,rgba(201,153,58,0.07) 0%,transparent 65%);
+  pointer-events:none;
+}
+.welcome-inner{
+  flex:1;display:flex;flex-direction:column;
+  padding:3rem 1.6rem 2rem;position:relative;z-index:1;
+}
+.welcome-badge{
+  display:inline-flex;align-items:center;gap:0.5rem;
+  background:var(--gold-dim);border:1px solid var(--gold-rim);
+  border-radius:50px;padding:0.35rem 0.9rem;
+  font-family:var(--mono);font-size:0.62rem;color:var(--gold);
+  letter-spacing:0.1em;text-transform:uppercase;
+  margin-bottom:2.5rem;align-self:flex-start;
+}
+.welcome-title{
+  font-family:var(--serif);font-size:2.8rem;font-weight:700;
+  line-height:1.05;letter-spacing:-0.02em;color:var(--cream);
+  margin-bottom:0.8rem;
+}
+.welcome-title em{color:var(--gold);font-style:italic}
+.welcome-desc{
+  font-size:0.95rem;color:var(--cream60);line-height:1.7;
+  font-weight:300;margin-bottom:2.5rem;max-width:340px;
+}
+.welcome-steps{
+  display:flex;flex-direction:column;gap:0.7rem;margin-bottom:3rem;
+}
+.welcome-step{
+  display:flex;align-items:center;gap:0.75rem;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:0.8rem 1rem;
+}
+.ws-num{
+  width:26px;height:26px;border-radius:8px;
+  background:var(--gold-dim);border:1px solid var(--gold-rim);
   display:flex;align-items:center;justify-content:center;
-  font-size:1.1rem;font-weight:700;color:#08070A;
+  font-family:var(--mono);font-size:0.65rem;color:var(--gold);
+  flex-shrink:0;
 }
-.dc-avatar.av{background:linear-gradient(135deg,var(--green),#1a8a52)}
-.dc-avatar.ot{background:linear-gradient(135deg,var(--amber),#b57a00)}
-.dc-avatar.of{background:var(--surface2);color:var(--dim)}
-.dc-info{flex:1;min-width:0}
-.dc-name{font-size:0.95rem;font-weight:700;color:var(--cream);margin-bottom:0.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dc-meta{font-size:0.75rem;color:var(--muted);display:flex;gap:0.5rem;flex-wrap:wrap}
-.dc-rating{font-family:var(--mono);font-size:0.7rem;color:var(--gold)}
-.dc-status{
-  font-family:var(--mono);font-size:0.62rem;font-weight:600;
-  letter-spacing:0.07em;text-transform:uppercase;
-  padding:0.15rem 0.5rem;border-radius:5px;
-  align-self:flex-start;flex-shrink:0;
+.ws-text{font-size:0.85rem;color:var(--cream60);font-weight:400}
+.ws-text strong{color:var(--cream);font-weight:600}
+.welcome-cta{
+  width:100%;padding:1.1rem;border-radius:14px;
+  background:var(--gold);color:#08070A;border:none;
+  font-size:1rem;font-weight:700;cursor:pointer;
+  transition:background 0.2s,transform 0.2s;
+  display:flex;align-items:center;justify-content:center;gap:0.5rem;
 }
-.dc-status.available{background:var(--green-dim);color:var(--green);border:1px solid var(--green-rim)}
-.dc-status.on-trip{background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber-rim)}
-.dc-status.offline{background:var(--red-dim);color:var(--red);border:1px solid var(--red-rim)}
+.welcome-cta:hover,.welcome-cta:active{background:var(--gold2);transform:scale(0.99)}
 
-.dc-details{display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap}
-.dc-chip{font-size:0.72rem;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:0.18rem 0.5rem}
-
-/* Status toggle buttons */
-.dc-actions{display:flex;gap:0.5rem}
-.dc-btn{
-  flex:1;padding:0.5rem;border-radius:8px;font-size:0.75rem;font-weight:600;
-  cursor:pointer;border:1px solid;font-family:var(--sans);transition:all 0.15s;
+/* ════════════════════════════════════
+   PHONE ENTRY SCREEN
+════════════════════════════════════ */
+#s-phone{
+  background:var(--bg);
 }
-.dc-btn-avail{background:var(--green-dim);color:var(--green);border-color:var(--green-rim)}
-.dc-btn-avail:hover{background:var(--green);color:#fff}
-.dc-btn-trip{background:var(--amber-dim);color:var(--amber);border-color:var(--amber-rim)}
-.dc-btn-trip:hover{background:var(--amber);color:#fff}
-.dc-btn-off{background:var(--red-dim);color:var(--red);border-color:var(--red-rim)}
-.dc-btn-off:hover{background:var(--red);color:#fff}
-.dc-btn.active-state{opacity:0.4;cursor:default;pointer-events:none}
-.dc-btn-del{
-  width:34px;flex:none;padding:0.5rem;border-radius:8px;
-  background:transparent;color:var(--dim);border:1px solid var(--border);
-  cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;
-  transition:all 0.15s;
+.screen-header{
+  padding:1.2rem 1.4rem;display:flex;align-items:center;gap:0.8rem;
+  border-bottom:1px solid var(--border);
 }
-.dc-btn-del:hover{background:var(--red-dim);color:var(--red);border-color:var(--red-rim)}
-
-/* ── EMPTY STATE ── */
-.empty-state{text-align:center;padding:4rem 2rem;color:var(--muted)}
-.empty-state .ei{font-size:3rem;margin-bottom:1rem;display:block}
-
-/* ── MODAL ── */
-.modal-backdrop{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;padding:1rem;display:none}
-.modal-backdrop.open{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:1.8rem;width:100%;max-width:420px}
-.modal-title{font-size:1.1rem;font-weight:700;color:var(--cream);margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between}
-.modal-close{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem}
-.modal-close:hover{color:var(--cream)}
-.form-group{margin-bottom:1rem}
-.form-group label{display:block;font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem;font-family:var(--mono)}
-.form-input,.form-select{
-  width:100%;background:var(--surface2);border:1px solid var(--border);
-  border-radius:9px;padding:0.7rem 0.9rem;color:var(--cream);
-  font-family:var(--sans);font-size:0.88rem;outline:none;transition:border-color 0.2s;
-  appearance:none;
+.back-btn{
+  width:38px;height:38px;border-radius:10px;background:var(--surface);
+  border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:1rem;color:var(--cream60);transition:all 0.2s;flex-shrink:0;
 }
-.form-input:focus,.form-select:focus{border-color:var(--gold-rim)}
-.form-input::placeholder{color:var(--dim)}
-.form-select option{background:var(--surface2);color:var(--cream)}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem}
-.modal-actions{display:flex;gap:0.6rem;margin-top:1.5rem}
-.modal-save{flex:1;background:var(--gold);color:#08070A;border:none;border-radius:9px;padding:0.8rem;font-weight:700;font-size:0.9rem;cursor:pointer;font-family:var(--sans);transition:background 0.2s}
-.modal-save:hover{background:#E5B355}
-.modal-cancel{background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:9px;padding:0.8rem 1.2rem;font-size:0.85rem;cursor:pointer;font-family:var(--sans);transition:all 0.2s}
-.modal-cancel:hover{color:var(--cream);border-color:var(--cream)}
+.back-btn:hover{color:var(--cream);border-color:var(--border2)}
+.screen-title{font-size:1rem;font-weight:700;color:var(--cream)}
+.screen-body{flex:1;padding:2rem 1.6rem}
 
-/* ── TOAST ── */
-.toast{
+.phone-illustration{
+  width:80px;height:80px;margin:0 auto 1.8rem;
+  background:var(--gold-dim);border:1px solid var(--gold-rim);
+  border-radius:22px;display:flex;align-items:center;justify-content:center;
+  font-size:2.2rem;
+}
+.phone-heading{
+  font-family:var(--serif);font-size:1.9rem;font-weight:700;
+  color:var(--cream);text-align:center;margin-bottom:0.5rem;line-height:1.1;
+}
+.phone-sub{font-size:0.88rem;color:var(--cream60);text-align:center;margin-bottom:2rem;line-height:1.6}
+
+.input-group{margin-bottom:1rem}
+.input-label{
+  font-family:var(--mono);font-size:0.65rem;color:var(--cream30);
+  letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem;display:block;
+}
+.phone-input-wrap{
+  display:flex;align-items:center;gap:0;
+  background:var(--surface2);border:1.5px solid var(--border2);border-radius:13px;
+  overflow:hidden;transition:border-color 0.2s;
+}
+.phone-input-wrap:focus-within{border-color:var(--gold-rim)}
+.phone-prefix{
+  padding:0.9rem 0 0.9rem 1rem;
+  font-size:0.95rem;font-weight:600;color:var(--cream);
+  border-right:1px solid var(--border);
+  background:var(--surface3);
+  white-space:nowrap;font-family:var(--mono);
+  padding-right:0.8rem;
+}
+.phone-input{
+  flex:1;background:transparent;border:none;
+  padding:0.9rem 1rem;color:var(--cream);font-size:1.05rem;
+  font-weight:600;letter-spacing:0.05em;font-family:var(--mono);
+  width:0;/* flex handles width */
+}
+.phone-input::placeholder{color:var(--cream30);font-weight:400;letter-spacing:0}
+.primary-btn{
+  width:100%;padding:1rem;border-radius:13px;
+  background:var(--gold);color:#08070A;border:none;
+  font-size:0.95rem;font-weight:700;cursor:pointer;
+  transition:background 0.2s,transform 0.15s;
+  display:flex;align-items:center;justify-content:center;gap:0.5rem;
+  margin-top:0.5rem;
+}
+.primary-btn:hover,.primary-btn:active{background:var(--gold2);transform:scale(0.99)}
+.primary-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+.err-msg{font-size:0.78rem;color:var(--red);margin-top:0.4rem;display:none}
+
+/* ════════════════════════════════════
+   KYC SCREEN
+════════════════════════════════════ */
+#s-kyc{background:var(--bg)}
+.kyc-progress{
+  padding:1rem 1.4rem;display:flex;align-items:center;gap:0.8rem;
+  border-bottom:1px solid var(--border);
+}
+.progress-steps{flex:1;display:flex;gap:0.4rem}
+.progress-step{
+  height:3px;flex:1;border-radius:3px;
+  background:var(--border2);transition:background 0.3s;
+}
+.progress-step.done{background:var(--gold)}
+.progress-step.active{background:var(--gold-rim)}
+.progress-label{font-family:var(--mono);font-size:0.65rem;color:var(--cream30);white-space:nowrap}
+
+.kyc-step{display:none;padding:1.6rem}
+.kyc-step.active{display:block}
+.kyc-step-title{
+  font-family:var(--serif);font-size:1.7rem;font-weight:700;
+  color:var(--cream);margin-bottom:0.3rem;
+}
+.kyc-step-sub{font-size:0.85rem;color:var(--cream60);margin-bottom:1.8rem;line-height:1.6}
+
+/* Form fields */
+.field-group{margin-bottom:1.1rem}
+.field-label{
+  font-family:var(--mono);font-size:0.63rem;color:var(--cream30);
+  letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.35rem;display:block;
+}
+.field-input,.field-select{
+  width:100%;background:var(--surface2);border:1.5px solid var(--border2);
+  border-radius:11px;padding:0.85rem 1rem;color:var(--cream);
+  font-size:0.93rem;transition:border-color 0.2s;font-weight:500;
+  appearance:none;-webkit-appearance:none;
+}
+.field-input:focus,.field-select:focus{border-color:var(--gold-rim)}
+.field-input::placeholder{color:var(--cream30);font-weight:400}
+.field-select option{background:#1C1A2A;color:var(--cream)}
+.field-input.has-err,.field-select.has-err{border-color:var(--red)}
+.field-err{font-size:0.72rem;color:var(--red);margin-top:0.3rem;display:none}
+
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem}
+
+/* City selector */
+.city-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.5rem}
+.city-option{
+  padding:0.75rem 0.5rem;border-radius:11px;
+  background:var(--surface2);border:1.5px solid var(--border2);
+  text-align:center;cursor:pointer;transition:all 0.2s;
+}
+.city-option:hover{border-color:var(--border2)}
+.city-option.selected{background:var(--gold-dim);border-color:var(--gold-rim);color:var(--gold)}
+.city-option .city-icon{font-size:1.4rem;display:block;margin-bottom:0.25rem}
+.city-option .city-name{font-size:0.82rem;font-weight:600;color:var(--cream)}
+.city-option.selected .city-name{color:var(--gold)}
+
+/* Vehicle selector */
+.vehicle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem}
+.vehicle-option{
+  padding:0.8rem 0.5rem;border-radius:11px;
+  background:var(--surface2);border:1.5px solid var(--border2);
+  text-align:center;cursor:pointer;transition:all 0.2s;
+}
+.vehicle-option.selected{background:var(--gold-dim);border-color:var(--gold-rim)}
+.vehicle-option .vi{font-size:1.5rem;display:block;margin-bottom:0.25rem}
+.vehicle-option .vl{font-size:0.72rem;font-weight:600;color:var(--cream60)}
+.vehicle-option.selected .vl{color:var(--gold)}
+
+/* Photo upload */
+.photo-upload{
+  border:1.5px dashed var(--border2);border-radius:14px;
+  padding:1.8rem 1rem;text-align:center;cursor:pointer;
+  transition:border-color 0.2s,background 0.2s;position:relative;
+  margin-bottom:0.5rem;
+}
+.photo-upload:hover,.photo-upload.has-file{
+  border-color:var(--gold-rim);background:var(--gold-dim);
+}
+.photo-upload input[type=file]{
+  position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;
+}
+.photo-upload .pu-icon{font-size:2rem;margin-bottom:0.5rem;display:block}
+.photo-upload .pu-label{font-size:0.85rem;font-weight:600;color:var(--cream60)}
+.photo-upload .pu-sub{font-size:0.72rem;color:var(--cream30);margin-top:0.2rem}
+.photo-upload.has-file .pu-label{color:var(--green)}
+.photo-preview{
+  width:80px;height:80px;border-radius:12px;object-fit:cover;
+  margin:0 auto 0.5rem;border:2px solid var(--gold-rim);display:none;
+}
+.selfie-row{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem}
+
+/* KYC bottom bar */
+.kyc-footer{
+  padding:1rem 1.6rem;border-top:1px solid var(--border);
+  background:var(--surface);display:flex;gap:0.7rem;
+  position:sticky;bottom:0;
+}
+.btn-secondary{
+  flex:none;padding:0.9rem 1.2rem;border-radius:12px;
+  background:transparent;color:var(--cream60);border:1.5px solid var(--border2);
+  font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.2s;
+}
+.btn-secondary:hover{color:var(--cream);border-color:var(--border2)}
+.btn-primary{
+  flex:1;padding:0.9rem;border-radius:12px;
+  background:var(--gold);color:#08070A;border:none;
+  font-size:0.95rem;font-weight:700;cursor:pointer;
+  transition:background 0.2s,transform 0.15s;
+  display:flex;align-items:center;justify-content:center;gap:0.5rem;
+}
+.btn-primary:hover{background:var(--gold2)}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed}
+
+/* Upload progress */
+.upload-bar{
+  height:3px;background:var(--border2);border-radius:3px;margin-top:0.6rem;
+  overflow:hidden;display:none;
+}
+.upload-bar-fill{
+  height:100%;background:var(--gold);border-radius:3px;
+  width:0%;transition:width 0.3s;
+}
+
+/* ════════════════════════════════════
+   HOME SCREEN (Daily Attendance)
+════════════════════════════════════ */
+#s-home{background:var(--bg);position:relative;overflow:hidden}
+.home-bg-glow{
+  position:absolute;top:-10%;left:50%;transform:translateX(-50%);
+  width:600px;height:400px;
+  background:radial-gradient(ellipse,rgba(201,153,58,0.05) 0%,transparent 60%);
+  pointer-events:none;z-index:0;
+}
+.home-glow-available{background:radial-gradient(ellipse,rgba(34,197,94,0.06) 0%,transparent 60%)}
+.home-glow-offline{background:radial-gradient(ellipse,rgba(239,68,68,0.04) 0%,transparent 60%)}
+
+/* Top bar */
+.home-topbar{
+  padding:1.1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);position:relative;z-index:1;
+}
+.home-logo{display:flex;align-items:center;gap:0.55rem}
+.home-logo-icon{
+  width:34px;height:34px;background:var(--gold-dim);border:1px solid var(--gold-rim);
+  border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;
+}
+.home-logo-name{font-family:var(--serif);font-size:1.1rem;font-weight:700;color:var(--cream)}
+.home-logo-name span{color:var(--gold)}
+.home-date-badge{
+  font-family:var(--mono);font-size:0.65rem;color:var(--cream30);
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:0.3rem 0.65rem;
+}
+
+/* Driver profile strip */
+.driver-profile-strip{
+  padding:1.2rem 1.4rem;
+  display:flex;align-items:center;gap:1rem;
+  border-bottom:1px solid var(--border);
+  position:relative;z-index:1;
+  background:var(--surface);
+}
+.driver-profile-avatar{
+  width:50px;height:50px;border-radius:14px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--gold),#7A4F00);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:1.3rem;font-weight:700;color:#08070A;
+  overflow:hidden;
+}
+.driver-profile-avatar img{width:100%;height:100%;object-fit:cover}
+.driver-profile-info{flex:1;min-width:0}
+.driver-profile-name{font-size:1rem;font-weight:700;color:var(--cream);margin-bottom:0.15rem}
+.driver-profile-meta{font-size:0.75rem;color:var(--cream60);display:flex;gap:0.6rem;flex-wrap:wrap}
+.driver-profile-meta span{display:flex;align-items:center;gap:0.2rem}
+.profile-edit-btn{
+  width:34px;height:34px;border-radius:9px;background:var(--surface2);
+  border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:0.85rem;color:var(--cream60);transition:all 0.2s;flex-shrink:0;
+}
+.profile-edit-btn:hover{border-color:var(--gold-rim);color:var(--gold)}
+
+/* Main attendance area */
+.attendance-area{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:2rem 1.4rem;
+  position:relative;z-index:1;
+}
+.status-ring{
+  position:relative;margin-bottom:1.5rem;
+}
+/* Big toggle button */
+.attendance-btn{
+  width:200px;height:200px;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:0.6rem;cursor:pointer;border:none;
+  transition:transform 0.2s var(--ease),box-shadow 0.3s;
+  position:relative;overflow:hidden;
+}
+.attendance-btn.available{
+  background:radial-gradient(circle at 40% 35%,#2ECC71,#16A34A);
+  box-shadow:0 0 0 12px rgba(34,197,94,0.1),0 0 0 24px rgba(34,197,94,0.05),0 20px 50px rgba(34,197,94,0.35);
+}
+.attendance-btn.offline{
+  background:radial-gradient(circle at 40% 35%,#374151,#1F2937);
+  box-shadow:0 0 0 12px rgba(255,255,255,0.04),0 20px 40px rgba(0,0,0,0.5);
+}
+.attendance-btn:active{transform:scale(0.94)}
+.attendance-btn .btn-icon{font-size:3rem;line-height:1;display:block}
+.attendance-btn .btn-text{font-size:0.9rem;font-weight:700;color:#fff;letter-spacing:0.02em}
+.attendance-btn .btn-subtext{font-size:0.7rem;color:rgba(255,255,255,0.7);font-weight:400}
+/* Pulsing ring for available */
+.attendance-btn.available::after{
+  content:'';position:absolute;inset:-8px;border-radius:50%;
+  border:2px solid rgba(34,197,94,0.4);
+  animation:ringPulse 2.5s ease infinite;
+}
+@keyframes ringPulse{
+  0%{opacity:0.8;transform:scale(1)}
+  100%{opacity:0;transform:scale(1.15)}
+}
+
+.status-label{
+  font-family:var(--serif);font-size:1.5rem;font-weight:700;
+  color:var(--cream);text-align:center;margin-bottom:0.3rem;
+}
+.status-hint{
+  font-size:0.82rem;color:var(--cream60);text-align:center;
+  margin-bottom:0.5rem;
+}
+.status-since{
+  font-family:var(--mono);font-size:0.68rem;color:var(--cream30);
+  text-align:center;
+}
+
+/* Today's info strip */
+.today-strip{
+  width:100%;display:grid;grid-template-columns:1fr 1fr;
+  gap:0.75rem;margin-top:1.5rem;
+}
+.today-tile{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:1rem;text-align:center;
+}
+.today-tile .tv{
+  font-family:var(--serif);font-size:1.6rem;font-weight:700;
+  color:var(--gold);line-height:1;margin-bottom:0.2rem;
+}
+.today-tile .tl{font-size:0.72rem;color:var(--cream60);font-family:var(--mono);letter-spacing:0.06em}
+
+/* Bottom sheet with quick actions */
+.home-footer{
+  padding:1rem 1.4rem 1.6rem;border-top:1px solid var(--border);
+  position:relative;z-index:1;
+  background:var(--surface);
+}
+.quick-actions{display:flex;gap:0.6rem}
+.qa-btn{
+  flex:1;padding:0.75rem 0.5rem;border-radius:12px;
+  background:var(--surface2);border:1px solid var(--border);
+  cursor:pointer;transition:all 0.2s;
+  display:flex;flex-direction:column;align-items:center;gap:0.3rem;
+  text-decoration:none;
+}
+.qa-btn:hover{border-color:var(--gold-rim);background:var(--gold-dim)}
+.qa-btn .qi{font-size:1.2rem}
+.qa-btn .ql{font-size:0.7rem;font-weight:600;color:var(--cream60);text-align:center;line-height:1.2}
+.qa-btn:hover .ql{color:var(--gold)}
+
+/* Snack bar at bottom */
+.snack{
   position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(80px);
-  background:var(--surface);border:1px solid var(--border);border-radius:10px;
-  padding:0.7rem 1.2rem;font-size:0.85rem;font-weight:500;color:var(--cream);
-  z-index:9999;transition:transform 0.35s var(--ease);white-space:nowrap;
-  box-shadow:0 8px 30px rgba(0,0,0,0.5);
+  background:var(--surface);border:1px solid var(--border2);border-radius:12px;
+  padding:0.75rem 1.3rem;font-size:0.85rem;font-weight:600;color:var(--cream);
+  z-index:9999;transition:transform 0.4s var(--ease);white-space:nowrap;
+  box-shadow:0 8px 30px rgba(0,0,0,0.5);pointer-events:none;
 }
-.toast.show{transform:translateX(-50%) translateY(0)}
-.toast.success{border-color:var(--green-rim);color:var(--green)}
-.toast.error{border-color:var(--red-rim);color:var(--red)}
+.snack.visible{transform:translateX(-50%) translateY(0)}
+.snack.ok{color:var(--green);border-color:var(--green-rim)}
+.snack.err{color:var(--red);border-color:var(--red-rim)}
 
-/* ── RESPONSIVE ── */
-@media(max-width:600px){
-  .stats-bar{grid-template-columns:1fr 1fr}
-  .driver-grid{grid-template-columns:1fr}
-  .main{padding:1rem}
-  .topbar{padding:0.8rem 1rem}
-  .search-box{width:100%}
-  .toolbar{flex-direction:column;align-items:stretch}
-  .form-row{grid-template-columns:1fr}
+/* ════════════════════════════════════
+   KYC SUBMITTED SCREEN
+════════════════════════════════════ */
+#s-submitted{
+  background:var(--bg);align-items:center;justify-content:center;
+  padding:2rem 1.6rem;text-align:center;
 }
+.submitted-icon{
+  width:90px;height:90px;border-radius:25px;
+  background:var(--green-dim);border:1px solid var(--green-rim);
+  display:flex;align-items:center;justify-content:center;
+  font-size:2.8rem;margin:0 auto 1.5rem;
+}
+.submitted-title{
+  font-family:var(--serif);font-size:2rem;font-weight:700;color:var(--cream);
+  margin-bottom:0.5rem;
+}
+.submitted-desc{font-size:0.9rem;color:var(--cream60);line-height:1.7;margin-bottom:2rem;max-width:300px}
+.submitted-info{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:1.2rem;width:100%;max-width:340px;margin-bottom:1.5rem;
+}
+.si-row{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.85rem}
+.si-row:last-child{border-bottom:none}
+.si-label{color:var(--cream60)}
+.si-value{color:var(--cream);font-weight:600}
+.submitted-contact{font-size:0.8rem;color:var(--cream30);display:flex;align-items:center;gap:0.3rem;justify-content:center}
+
+/* ════════════════════════════════════
+   KEYFRAMES
+════════════════════════════════════ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}
+
+.screen-body,.kyc-step{animation:slideIn 0.35s var(--ease) both}
+
+/* ════════════════════════════════════
+   MISC
+════════════════════════════════════ */
+.text-center{text-align:center}
+.mt1{margin-top:0.6rem}
+.dot-green{width:8px;height:8px;background:var(--green);border-radius:50%;display:inline-block;animation:pulse 2s ease infinite}
+.dot-red{width:8px;height:8px;background:var(--red);border-radius:50%;display:inline-block}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.5)}70%{box-shadow:0 0 0 6px rgba(34,197,94,0)}}
 </style>
 </head>
 <body>
 
-<!-- ══ LOGIN GATE ══ -->
-<div id="loginGate">
-  <div class="login-box">
-    <div class="login-logo">🚗</div>
-    <div class="login-title">DriveBuddy <span style="color:var(--gold)">Admin</span></div>
-    <div class="login-sub">Driver management panel · Enter your password</div>
-    <input type="password" class="login-input" id="pwInput" placeholder="••••••••"
-      onkeydown="if(event.key==='Enter')checkLogin()">
-    <button class="login-btn" onclick="checkLogin()">Sign In</button>
-    <div class="login-err" id="loginErr">Incorrect password. Try again.</div>
+<!-- ══════════════════════════════════
+     LOADING SCREEN
+══════════════════════════════════ -->
+<div class="screen active" id="s-loading">
+  <div class="loading-logo">
+    <div class="loading-icon">🚗</div>
+    <div>
+      <div class="loading-wordmark">Drive<span>Buddy</span></div>
+      <div class="loading-sub">Driver Portal</div>
+    </div>
+    <div class="loading-spinner"></div>
   </div>
 </div>
 
-<!-- ══ MAIN APP ══ -->
-<div id="app">
-  <!-- Topbar -->
-  <div class="topbar">
-    <div class="topbar-brand">
-      <div class="topbar-logo">🚗</div>
-      <div class="topbar-name">Drive<span>Buddy</span> Admin</div>
+<!-- ══════════════════════════════════
+     WELCOME SCREEN
+══════════════════════════════════ -->
+<div class="screen" id="s-welcome">
+  <div class="welcome-glow"></div>
+  <div class="welcome-inner">
+    <div class="welcome-badge">🚗 Driver Portal · DriveBuddy</div>
+    <div class="welcome-title">Namaste,<br><em>Partner!</em></div>
+    <div class="welcome-desc">This is your daily check-in app. Mark yourself available when you're ready to take rides.</div>
+    <div class="welcome-steps">
+      <div class="welcome-step">
+        <div class="ws-num">1</div>
+        <div class="ws-text"><strong>Register once</strong> — fill your KYC details &amp; documents</div>
+      </div>
+      <div class="welcome-step">
+        <div class="ws-num">2</div>
+        <div class="ws-text"><strong>Daily check-in</strong> — tap Available when you're ready</div>
+      </div>
+      <div class="welcome-step">
+        <div class="ws-num">3</div>
+        <div class="ws-text"><strong>Get bookings</strong> — customers are automatically assigned to you</div>
+      </div>
     </div>
-    <div class="topbar-right">
-      <div class="topbar-time" id="liveTime"></div>
-      <button class="logout-btn" onclick="logout()">Sign Out</button>
-    </div>
-  </div>
-
-  <!-- Stats Bar -->
-  <div class="stats-bar">
-    <div class="stat-box"><div class="sv green" id="st-avail">–</div><div class="sl">Available</div></div>
-    <div class="stat-box"><div class="sv amber" id="st-trip">–</div><div class="sl">On Trip</div></div>
-    <div class="stat-box"><div class="sv red" id="st-off">–</div><div class="sl">Offline</div></div>
-    <div class="stat-box"><div class="sv blue" id="st-total">–</div><div class="sl">Total Drivers</div></div>
-  </div>
-
-  <!-- Main Content -->
-  <div class="main">
-    <div class="toolbar">
-      <div class="toolbar-title">Driver Roster</div>
-      <input type="text" class="search-box" id="searchBox" placeholder="🔍  Search driver name…" oninput="applyFilters()">
-      <button class="filter-btn active" id="filter-all" onclick="setFilter('all',this)">All</button>
-      <button class="filter-btn" id="filter-available" onclick="setFilter('available',this)">Available</button>
-      <button class="filter-btn" id="filter-on-trip" onclick="setFilter('on-trip',this)">On Trip</button>
-      <button class="filter-btn" id="filter-offline" onclick="setFilter('offline',this)">Offline</button>
-      <button class="add-btn" onclick="openAddModal()">+ Add Driver</button>
-    </div>
-
-    <div class="city-tabs" id="cityTabs">
-      <div class="city-tab active" onclick="setCity('all',this)">All Cities</div>
-      <div class="city-tab" onclick="setCity('Raipur',this)">Raipur</div>
-      <div class="city-tab" onclick="setCity('Bhilai',this)">Bhilai</div>
-      <div class="city-tab" onclick="setCity('Durg',this)">Durg</div>
-      <div class="city-tab" onclick="setCity('Bilaspur',this)">Bilaspur</div>
-    </div>
-
-    <div class="driver-grid" id="driverGrid">
-      <div style="color:var(--muted);font-size:0.9rem;padding:2rem">Loading drivers…</div>
-    </div>
+    <button class="welcome-cta" onclick="goTo('s-phone')">
+      Get Started →
+    </button>
   </div>
 </div>
 
-<!-- ══ ADD/EDIT MODAL ══ -->
-<div class="modal-backdrop" id="driverModal">
-  <div class="modal">
-    <div class="modal-title">
-      <span id="modalTitle">Add New Driver</span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+<!-- ══════════════════════════════════
+     PHONE ENTRY SCREEN
+══════════════════════════════════ -->
+<div class="screen" id="s-phone">
+  <div class="screen-header">
+    <button class="back-btn" onclick="goTo('s-welcome')">←</button>
+    <div class="screen-title">Sign In</div>
+  </div>
+  <div class="screen-body">
+    <div class="phone-illustration">📱</div>
+    <div class="phone-heading">Your Phone<br>Number</div>
+    <div class="phone-sub">We'll check if you're already registered or need to complete KYC.</div>
+    <div class="input-group">
+      <label class="input-label">Mobile Number</label>
+      <div class="phone-input-wrap">
+        <div class="phone-prefix">+91</div>
+        <input type="tel" class="phone-input" id="phoneInput" placeholder="9876543210"
+          maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')">
+      </div>
+      <div class="err-msg" id="phoneErr">Please enter a valid 10-digit mobile number.</div>
     </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Full Name *</label>
-        <input type="text" class="form-input" id="m_name" placeholder="Ramesh Kumar">
-      </div>
-      <div class="form-group">
-        <label>Mobile *</label>
-        <input type="tel" class="form-input" id="m_phone" placeholder="9876543210" maxlength="10">
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>City *</label>
-        <select class="form-select" id="m_city">
-          <option value="">Select city</option>
-          <option value="Raipur">Raipur</option>
-          <option value="Bhilai">Bhilai</option>
-          <option value="Durg">Durg</option>
-          <option value="Bilaspur">Bilaspur</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Experience (years)</label>
-        <input type="number" class="form-input" id="m_exp" placeholder="6" min="1" max="40">
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Rating (out of 5)</label>
-        <input type="number" class="form-input" id="m_rating" placeholder="4.9" min="1" max="5" step="0.1">
-      </div>
-      <div class="form-group">
-        <label>Initial Status</label>
-        <select class="form-select" id="m_status">
-          <option value="available">Available</option>
-          <option value="offline">Offline</option>
-          <option value="on-trip">On Trip</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-group">
-      <label>Vehicle (optional)</label>
-      <input type="text" class="form-input" id="m_vehicle" placeholder="Honda City, Swift…">
-    </div>
-    <div class="modal-actions">
-      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
-      <button class="modal-save" onclick="saveDriver()" id="saveBtn">Save Driver</button>
+    <button class="primary-btn" id="phoneBtn" onclick="handlePhoneSubmit()">Continue →</button>
+    <div class="upload-bar" id="phoneLoading" style="display:block;margin-top:1rem">
+      <div class="upload-bar-fill" id="phoneLoadFill" style="display:none"></div>
     </div>
   </div>
 </div>
 
-<!-- Toast -->
-<div class="toast" id="toast"></div>
+<!-- ══════════════════════════════════
+     KYC SCREEN (3 steps)
+══════════════════════════════════ -->
+<div class="screen" id="s-kyc">
+  <!-- Progress bar -->
+  <div class="kyc-progress">
+    <button class="back-btn" id="kycBackBtn" onclick="kycBack()">←</button>
+    <div class="progress-steps">
+      <div class="progress-step active" id="ps-1"></div>
+      <div class="progress-step" id="ps-2"></div>
+      <div class="progress-step" id="ps-3"></div>
+    </div>
+    <div class="progress-label" id="progressLabel">Step 1 / 3</div>
+  </div>
+
+  <!-- STEP 1: Personal Info -->
+  <div class="kyc-step active" id="kyc-step-1" style="flex:1;overflow-y:auto">
+    <div class="kyc-step-title">Personal<br>Details</div>
+    <div class="kyc-step-sub">Fill your basic information. This will appear to customers.</div>
+    <div class="field-group">
+      <label class="field-label">Full Name *</label>
+      <input type="text" class="field-input" id="k_name" placeholder="Ramesh Kumar Sahu">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Your City *</label>
+      <div class="city-grid">
+        <div class="city-option" onclick="selectCity(this,'Raipur')"><span class="city-icon">🏢</span><span class="city-name">Raipur</span></div>
+        <div class="city-option" onclick="selectCity(this,'Bhilai')"><span class="city-icon">🏭</span><span class="city-name">Bhilai</span></div>
+        <div class="city-option" onclick="selectCity(this,'Durg')"><span class="city-icon">🏙️</span><span class="city-name">Durg</span></div>
+        <div class="city-option" onclick="selectCity(this,'Bilaspur')"><span class="city-icon">🏛️</span><span class="city-name">Bilaspur</span></div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label">Experience (years) *</label>
+        <input type="number" class="field-input" id="k_exp" placeholder="6" min="1" max="40" inputmode="numeric">
+      </div>
+      <div class="field-group">
+        <label class="field-label">License Number</label>
+        <input type="text" class="field-input" id="k_license" placeholder="CG04 2019 0012345" style="text-transform:uppercase">
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: Vehicle & Availability -->
+  <div class="kyc-step" id="kyc-step-2" style="flex:1;overflow-y:auto">
+    <div class="kyc-step-title">Vehicle<br>Details</div>
+    <div class="kyc-step-sub">Tell us what kind of vehicle you typically drive for our customers.</div>
+    <div class="field-group">
+      <label class="field-label">Vehicle Type *</label>
+      <div class="vehicle-grid">
+        <div class="vehicle-option" onclick="selectVehicle(this,'Sedan')"><span class="vi">🚗</span><span class="vl">Sedan</span></div>
+        <div class="vehicle-option" onclick="selectVehicle(this,'Hatchback')"><span class="vi">🚙</span><span class="vl">Hatchback</span></div>
+        <div class="vehicle-option" onclick="selectVehicle(this,'SUV')"><span class="vi">🛻</span><span class="vl">SUV/MUV</span></div>
+        <div class="vehicle-option" onclick="selectVehicle(this,'Van')"><span class="vi">🚐</span><span class="vl">Van</span></div>
+        <div class="vehicle-option" onclick="selectVehicle(this,'Luxury')"><span class="vi">🏎️</span><span class="vl">Luxury</span></div>
+        <div class="vehicle-option" onclick="selectVehicle(this,'Any')"><span class="vi">✅</span><span class="vl">Any</span></div>
+      </div>
+    </div>
+    <div class="field-group" style="margin-top:0.5rem">
+      <label class="field-label">Vehicle Name (optional)</label>
+      <input type="text" class="field-input" id="k_vehicle_name" placeholder="Honda City, Swift Dzire…">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Services You Can Do *</label>
+      <div style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.2rem" id="servicesGroup">
+        <label style="display:flex;align-items:center;gap:0.7rem;padding:0.75rem 1rem;background:var(--surface2);border:1.5px solid var(--border2);border-radius:10px;cursor:pointer;transition:border-color 0.2s" id="svc-personal">
+          <input type="checkbox" value="Personal Driver" style="accent-color:var(--gold);width:16px;height:16px" onchange="toggleService(this)"> <span style="font-size:0.88rem;font-weight:500">🚗 Personal Driver</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:0.7rem;padding:0.75rem 1rem;background:var(--surface2);border:1.5px solid var(--border2);border-radius:10px;cursor:pointer;transition:border-color 0.2s" id="svc-night">
+          <input type="checkbox" value="Night Driver" style="accent-color:var(--gold);width:16px;height:16px" onchange="toggleService(this)"> <span style="font-size:0.88rem;font-weight:500">🌙 Night Driver</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:0.7rem;padding:0.75rem 1rem;background:var(--surface2);border:1.5px solid var(--border2);border-radius:10px;cursor:pointer;transition:border-color 0.2s" id="svc-hospital">
+          <input type="checkbox" value="Hospital/Medical" style="accent-color:var(--gold);width:16px;height:16px" onchange="toggleService(this)"> <span style="font-size:0.88rem;font-weight:500">🏥 Hospital/Medical</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:0.7rem;padding:0.75rem 1rem;background:var(--surface2);border:1.5px solid var(--border2);border-radius:10px;cursor:pointer;transition:border-color 0.2s" id="svc-outstation">
+          <input type="checkbox" value="Outstation" style="accent-color:var(--gold);width:16px;height:16px" onchange="toggleService(this)"> <span style="font-size:0.88rem;font-weight:500">✈️ Outstation</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3: Documents -->
+  <div class="kyc-step" id="kyc-step-3" style="flex:1;overflow-y:auto">
+    <div class="kyc-step-title">Upload<br>Documents</div>
+    <div class="kyc-step-sub">Required for verification. Your documents are stored securely and never shared publicly.</div>
+    <div class="field-group">
+      <label class="field-label">Driving License / Aadhar Card *</label>
+      <div class="photo-upload" id="licenseUploadArea" onclick="document.getElementById('licenseFile').click()">
+        <input type="file" id="licenseFile" accept="image/*" style="display:none" onchange="handleFileSelect('license',this)">
+        <img class="photo-preview" id="licensePreview">
+        <span class="pu-icon" id="licenseIcon">🪪</span>
+        <div class="pu-label" id="licenseLabel">Tap to upload ID Proof</div>
+        <div class="pu-sub">Driving License or Aadhar Card</div>
+        <div class="upload-bar" id="licenseBar"><div class="upload-bar-fill" id="licenseBarFill"></div></div>
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Your Selfie *</label>
+      <div class="photo-upload" id="selfieUploadArea" onclick="document.getElementById('selfieFile').click()">
+        <input type="file" id="selfieFile" accept="image/*" capture="user" style="display:none" onchange="handleFileSelect('selfie',this)">
+        <img class="photo-preview" id="selfiePreview">
+        <span class="pu-icon" id="selfieIcon">🤳</span>
+        <div class="pu-label" id="selfieLabel">Take or upload selfie</div>
+        <div class="pu-sub">Clear photo of your face</div>
+        <div class="upload-bar" id="selfieBar"><div class="upload-bar-fill" id="selfieBarFill"></div></div>
+      </div>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:0.9rem 1rem;margin-top:0.5rem">
+      <div style="font-size:0.78rem;color:var(--cream60);line-height:1.65">
+        🔒 <strong style="color:var(--cream)">Your data is secure.</strong> Documents are uploaded to encrypted storage. DriveBuddy team will review your KYC within 24 hours.
+      </div>
+    </div>
+  </div>
+
+  <!-- KYC Footer -->
+  <div class="kyc-footer">
+    <button class="btn-secondary" id="kycPrevBtn" onclick="kycPrev()" style="display:none">Back</button>
+    <button class="btn-primary" id="kycNextBtn" onclick="kycNext()">Next →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     KYC SUBMITTED SCREEN
+══════════════════════════════════ -->
+<div class="screen" id="s-submitted">
+  <div class="submitted-icon">✅</div>
+  <div class="submitted-title">KYC Submitted!</div>
+  <div class="submitted-desc">Thank you! The DriveBuddy team will review and approve your profile within 24 hours. You'll receive a call once approved.</div>
+  <div class="submitted-info" id="submittedInfo"></div>
+  <div class="submitted-contact">📞 Questions? Call Nihal — 9111473929</div>
+</div>
+
+<!-- ══════════════════════════════════
+     HOME / ATTENDANCE SCREEN
+══════════════════════════════════ -->
+<div class="screen" id="s-home">
+  <div class="home-bg-glow" id="homeBgGlow"></div>
+
+  <!-- Top bar -->
+  <div class="home-topbar">
+    <div class="home-logo">
+      <div class="home-logo-icon">🚗</div>
+      <div class="home-logo-name">Drive<span>Buddy</span></div>
+    </div>
+    <div class="home-date-badge" id="homeDateBadge"></div>
+  </div>
+
+  <!-- Driver profile strip -->
+  <div class="driver-profile-strip">
+    <div class="driver-profile-avatar" id="profileAvatar"></div>
+    <div class="driver-profile-info">
+      <div class="driver-profile-name" id="profileName">–</div>
+      <div class="driver-profile-meta">
+        <span id="profileCity">–</span>
+        <span id="profileExp">–</span>
+        <span id="profileServices">–</span>
+      </div>
+    </div>
+    <div class="profile-edit-btn" title="View Profile" onclick="showSnack('Profile editing coming soon')">👤</div>
+  </div>
+
+  <!-- Attendance toggle -->
+  <div class="attendance-area">
+    <div class="status-ring">
+      <button class="attendance-btn offline" id="attendanceBtn" onclick="toggleAttendance()">
+        <span class="btn-icon" id="btnIcon">💤</span>
+        <span class="btn-text" id="btnText">GO ONLINE</span>
+        <span class="btn-subtext" id="btnSubtext">Tap to start accepting bookings</span>
+      </button>
+    </div>
+    <div class="status-label" id="statusLabel">Currently Offline</div>
+    <div class="status-hint" id="statusHint">You're not visible to customers right now</div>
+    <div class="status-since" id="statusSince"></div>
+
+    <!-- Today's summary tiles -->
+    <div class="today-strip">
+      <div class="today-tile">
+        <div class="tv" id="todayCheckIn">–</div>
+        <div class="tl">Today's Check-In</div>
+      </div>
+      <div class="today-tile">
+        <div class="tv" id="todayStatus">–</div>
+        <div class="tl">Status Today</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick actions footer -->
+  <div class="home-footer">
+    <div class="quick-actions">
+      <a href="tel:919111473929" class="qa-btn">
+        <span class="qi">📞</span><span class="ql">Call Office</span>
+      </a>
+      <a href="https://wa.me/919111473929" class="qa-btn" target="_blank">
+        <span class="qi">💬</span><span class="ql">WhatsApp</span>
+      </a>
+      <div class="qa-btn" onclick="confirmLogout()">
+        <span class="qi">🔄</span><span class="ql">Switch Account</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Snack bar -->
+<div class="snack" id="snack"></div>
 
 <script>
-/* ══════════════════════════════════════
-   AUTH — Change this password!
-══════════════════════════════════════ */
-const ADMIN_PASSWORD = 'drivebuddy2026'; // ← CHANGE THIS
-
-function checkLogin(){
-  const pw = document.getElementById('pwInput').value;
-  if(pw === ADMIN_PASSWORD){
-    sessionStorage.setItem('db_auth','1');
-    document.getElementById('loginGate').style.display='none';
-    document.getElementById('app').style.display='block';
-    initApp();
-  } else {
-    document.getElementById('loginErr').style.display='block';
-    document.getElementById('pwInput').value='';
-    document.getElementById('pwInput').focus();
-  }
-}
-function logout(){sessionStorage.removeItem('db_auth');location.reload()}
-
-// Auto-login if already authenticated in session
-if(sessionStorage.getItem('db_auth')==='1'){
-  document.getElementById('loginGate').style.display='none';
-  document.getElementById('app').style.display='block';
-}
-
-/* ══════════════════════════════════════
-   LIVE CLOCK
-══════════════════════════════════════ */
-function updateClock(){
-  document.getElementById('liveTime').textContent =
-    new Date().toLocaleString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true,
-      day:'numeric',month:'short'});
-}
-setInterval(updateClock,1000);updateClock();
-
-/* ══════════════════════════════════════
+/* ══════════════════════════════════════════════════
    STATE
-══════════════════════════════════════ */
-let allDrivers = {};  // id → driver object
-let currentFilter = 'all';
-let currentCity   = 'all';
-let editingId     = null;
+══════════════════════════════════════════════════ */
+let currentPhone = '';
+let driverData   = null;
+let kycStep      = 1;
+let kycCity      = '';
+let kycVehicle   = '';
+let kycServices  = [];
+let licenseUrl   = '';
+let selfieUrl    = '';
+let selfieDataURL = ''; // for avatar
+const TOTAL_STEPS = 3;
 
-/* ══════════════════════════════════════
-   FIREBASE LISTENER — real-time updates
-══════════════════════════════════════ */
-function initApp(){
-  db.ref('drivers').on('value', snap => {
-    allDrivers = {};
-    if(snap.exists()) snap.forEach(c => { allDrivers[c.key] = c.val() });
-    updateStats();
-    renderGrid();
-  });
+/* ══════════════════════════════════════════════════
+   SCREEN NAVIGATION
+══════════════════════════════════════════════════ */
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
 }
 
-// Auto-init if already logged in on page load
-if(sessionStorage.getItem('db_auth')==='1') initApp();
-
-/* ══════════════════════════════════════
-   STATS
-══════════════════════════════════════ */
-function updateStats(){
-  const vals = Object.values(allDrivers);
-  document.getElementById('st-avail').textContent = vals.filter(d=>d.status==='available').length;
-  document.getElementById('st-trip').textContent  = vals.filter(d=>d.status==='on-trip').length;
-  document.getElementById('st-off').textContent   = vals.filter(d=>d.status==='offline').length;
-  document.getElementById('st-total').textContent = vals.length;
+/* ══════════════════════════════════════════════════
+   SNACK
+══════════════════════════════════════════════════ */
+let snackTimer;
+function showSnack(msg, type=''){
+  const s = document.getElementById('snack');
+  s.textContent = msg; s.className = 'snack visible ' + type;
+  clearTimeout(snackTimer);
+  snackTimer = setTimeout(()=>s.classList.remove('visible'), 2800);
 }
 
-/* ══════════════════════════════════════
-   FILTERS
-══════════════════════════════════════ */
-function setFilter(f,el){
-  currentFilter = f;
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  renderGrid();
-}
-function setCity(c,el){
-  currentCity = c;
-  document.querySelectorAll('.city-tab').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  renderGrid();
-}
-function applyFilters(){renderGrid()}
-
-/* ══════════════════════════════════════
-   RENDER GRID
-══════════════════════════════════════ */
-function renderGrid(){
-  const grid  = document.getElementById('driverGrid');
-  const query = document.getElementById('searchBox').value.toLowerCase();
-
-  let list = Object.entries(allDrivers).filter(([id, d]) => {
-    const matchFilter = currentFilter==='all' || d.status===currentFilter;
-    const matchCity   = currentCity==='all' || d.city===currentCity;
-    const matchSearch = !query || d.name.toLowerCase().includes(query);
-    return matchFilter && matchCity && matchSearch;
-  });
-
-  if(list.length === 0){
-    grid.innerHTML = `<div class="empty-state"><span class="ei">🔍</span>No drivers match your filters.</div>`;
-    return;
-  }
-
-  // Sort: available first, then on-trip, then offline
-  const order = {available:0,'on-trip':1,offline:2};
-  list.sort((a,b)=>(order[a[1].status]||3)-(order[b[1].status]||3));
-
-  grid.innerHTML = list.map(([id, d]) => {
-    const statusLabel = {available:'Available','on-trip':'On Trip',offline:'Offline'}[d.status] || 'Offline';
-    const statusClass = d.status === 'on-trip' ? 'on-trip' : d.status;
-    const initials    = (d.name||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
-    const avClass     = statusClass === 'available' ? 'av' : statusClass === 'on-trip' ? 'ot' : 'of';
-
-    return `
-    <div class="driver-card ${statusClass}" id="card-${id}">
-      <div class="dc-top">
-        <div class="dc-avatar ${avClass}">${initials}</div>
-        <div class="dc-info">
-          <div class="dc-name">${d.name || 'Unknown'}</div>
-          <div class="dc-meta">
-            <span>📍 ${d.city || '–'}</span>
-            ${d.rating ? `<span class="dc-rating">★ ${d.rating}</span>` : ''}
-          </div>
-        </div>
-        <div class="dc-status ${statusClass}">${statusLabel}</div>
-      </div>
-      <div class="dc-details">
-        ${d.experience ? `<span class="dc-chip">🕐 ${d.experience} yrs</span>` : ''}
-        ${d.phone      ? `<span class="dc-chip">📱 ${d.phone}</span>` : ''}
-        ${d.vehicle    ? `<span class="dc-chip">🚗 ${d.vehicle}</span>` : ''}
-      </div>
-      <div class="dc-actions">
-        <button class="dc-btn dc-btn-avail${d.status==='available'?' active-state':''}"
-          onclick="setStatus('${id}','available')">✓ Available</button>
-        <button class="dc-btn dc-btn-trip${d.status==='on-trip'?' active-state':''}"
-          onclick="setStatus('${id}','on-trip')">🚗 On Trip</button>
-        <button class="dc-btn dc-btn-off${d.status==='offline'?' active-state':''}"
-          onclick="setStatus('${id}','offline')">⏸ Offline</button>
-        <button class="dc-btn-del" onclick="editDriver('${id}')" title="Edit">✏️</button>
-        <button class="dc-btn-del" onclick="deleteDriver('${id}','${(d.name||'').replace(/'/g,'')}')" title="Delete">🗑</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-/* ══════════════════════════════════════
-   STATUS CHANGE
-══════════════════════════════════════ */
-function setStatus(id, status){
-  db.ref('drivers/' + id + '/status').set(status)
-    .then(()=>showToast('✓ Status updated','success'))
-    .catch(()=>showToast('Failed to update','error'));
-}
-
-/* ══════════════════════════════════════
-   ADD / EDIT MODAL
-══════════════════════════════════════ */
-function openAddModal(){
-  editingId = null;
-  document.getElementById('modalTitle').textContent = 'Add New Driver';
-  ['m_name','m_phone','m_city','m_exp','m_rating','m_vehicle','m_status'].forEach(id=>{
-    const el = document.getElementById(id);
-    if(el.tagName==='SELECT') el.value = id==='m_status' ? 'available' : '';
-    else el.value = '';
-  });
-  document.getElementById('driverModal').classList.add('open');
-  setTimeout(()=>document.getElementById('m_name').focus(),100);
-}
-
-function editDriver(id){
-  const d = allDrivers[id];
-  if(!d) return;
-  editingId = id;
-  document.getElementById('modalTitle').textContent = 'Edit Driver';
-  document.getElementById('m_name').value    = d.name || '';
-  document.getElementById('m_phone').value   = d.phone || '';
-  document.getElementById('m_city').value    = d.city || '';
-  document.getElementById('m_exp').value     = d.experience || '';
-  document.getElementById('m_rating').value  = d.rating || '';
-  document.getElementById('m_vehicle').value = d.vehicle || '';
-  document.getElementById('m_status').value  = d.status || 'available';
-  document.getElementById('driverModal').classList.add('open');
-}
-
-function closeModal(){document.getElementById('driverModal').classList.remove('open')}
-
-function saveDriver(){
-  const name   = document.getElementById('m_name').value.trim();
-  const phone  = document.getElementById('m_phone').value.trim();
-  const city   = document.getElementById('m_city').value;
-  const exp    = document.getElementById('m_exp').value;
-  const rating = document.getElementById('m_rating').value;
-  const vehicle= document.getElementById('m_vehicle').value.trim();
-  const status = document.getElementById('m_status').value;
-
-  if(!name || !city){ showToast('Name and city are required','error'); return; }
-
-  const data = {
-    name, city, status,
-    phone:    phone   || null,
-    experience: exp   ? parseInt(exp) : null,
-    rating:   rating  ? parseFloat(rating) : 4.9,
-    vehicle:  vehicle || null,
-    updatedAt: Date.now()
-  };
-
-  const ref = editingId
-    ? db.ref('drivers/' + editingId)
-    : db.ref('drivers').push();
-
-  ref.update ? ref.update(data) : ref.set(data);
-  showToast(editingId ? '✓ Driver updated' : '✓ Driver added','success');
-  closeModal();
-}
-
-/* ══════════════════════════════════════
-   DELETE
-══════════════════════════════════════ */
-function deleteDriver(id, name){
-  if(!confirm(`Remove ${name} from the roster? This cannot be undone.`)) return;
-  db.ref('drivers/' + id).remove()
-    .then(()=>showToast('Driver removed','success'))
-    .catch(()=>showToast('Failed to remove','error'));
-}
-
-/* ══════════════════════════════════════
-   TOAST
-══════════════════════════════════════ */
-let toastTimer;
-function showToast(msg, type=''){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show ' + type;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>t.classList.remove('show'), 2500);
-}
-
-/* ══════════════════════════════════════
-   KEYBOARD SHORTCUTS
-══════════════════════════════════════ */
-document.addEventListener('keydown', e => {
-  if(e.key === 'Escape') closeModal();
-  if(e.key === '/' && document.activeElement.tagName !== 'INPUT'){
-    e.preventDefault();document.getElementById('searchBox').focus();
+/* ══════════════════════════════════════════════════
+   INIT — check localStorage for returning driver
+══════════════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', async () => {
+  await new Promise(r => setTimeout(r, 1200)); // show loading
+  const saved = localStorage.getItem('db_phone');
+  if(saved){
+    currentPhone = saved;
+    await loadDriverAndGoHome(saved);
+  } else {
+    goTo('s-welcome');
   }
 });
 
-/* ══════════════════════════════════════
-   SEED SAMPLE DRIVERS
-   Run once to populate Firebase with your
-   40 drivers. Then remove this function call.
-══════════════════════════════════════ */
-function seedSampleDrivers(){
-  const sampleDrivers = [
-    {name:'Ramesh Kumar',phone:'9876543201',city:'Raipur',experience:8,rating:4.9,vehicle:'Honda City',status:'available'},
-    {name:'Suresh Yadav',phone:'9876543202',city:'Raipur',experience:6,rating:4.8,vehicle:'Swift Dzire',status:'available'},
-    {name:'Mahesh Sahu',phone:'9876543203',city:'Raipur',experience:7,rating:4.9,vehicle:'Wagon R',status:'offline'},
-    {name:'Dinesh Patel',phone:'9876543204',city:'Bhilai',experience:5,rating:4.7,vehicle:'Alto',status:'available'},
-    {name:'Rajesh Verma',phone:'9876543205',city:'Bhilai',experience:9,rating:5.0,vehicle:'Honda City',status:'on-trip'},
-    {name:'Umesh Tiwari',phone:'9876543206',city:'Durg',experience:6,rating:4.8,vehicle:'Baleno',status:'available'},
-    {name:'Naresh Chandrakar',phone:'9876543207',city:'Bilaspur',experience:7,rating:4.9,vehicle:'Swift',status:'offline'},
-    {name:'Ganesh Dewangan',phone:'9876543208',city:'Raipur',experience:5,rating:4.7,vehicle:'Celerio',status:'available'},
-    {name:'Lokesh Kosare',phone:'9876543209',city:'Bhilai',experience:8,rating:4.8,vehicle:'Wagon R',status:'available'},
-    {name:'Prakash Nishad',phone:'9876543210',city:'Durg',experience:6,rating:4.9,vehicle:'Swift Dzire',status:'available'},
-  ];
-  sampleDrivers.forEach(d => db.ref('drivers').push({...d, updatedAt: Date.now()}));
-  showToast('✓ Sample drivers added! Remove seedSampleDrivers() call now.','success');
+async function loadDriverAndGoHome(phone){
+  try {
+    const snap = await db.ref('drivers/' + phone).once('value');
+    if(snap.exists()){
+      driverData = snap.val();
+      populateHomeScreen(driverData);
+      goTo('s-home');
+      listenForStatusChanges(phone);
+    } else {
+      localStorage.removeItem('db_phone');
+      goTo('s-welcome');
+    }
+  } catch(e){
+    goTo('s-welcome');
+    showSnack('Connection error. Check internet.','err');
+  }
 }
-// ↓ UNCOMMENT this line ONCE to add sample drivers, then comment it back
-// seedSampleDrivers();
+
+/* ══════════════════════════════════════════════════
+   PHONE SUBMIT
+══════════════════════════════════════════════════ */
+async function handlePhoneSubmit(){
+  const phone = document.getElementById('phoneInput').value.trim();
+  const err   = document.getElementById('phoneErr');
+  if(!/^\d{10}$/.test(phone)){
+    err.style.display = 'block';
+    document.getElementById('phoneInput').style.borderColor = 'var(--red)';
+    return;
+  }
+  err.style.display = 'none';
+  document.getElementById('phoneInput').style.borderColor = '';
+
+  const btn = document.getElementById('phoneBtn');
+  btn.disabled = true;
+  btn.textContent = 'Checking…';
+
+  try {
+    const snap = await db.ref('drivers/' + phone).once('value');
+    currentPhone = phone;
+    if(snap.exists()){
+      localStorage.setItem('db_phone', phone);
+      driverData = snap.val();
+      populateHomeScreen(driverData);
+      listenForStatusChanges(phone);
+      goTo('s-home');
+    } else {
+      // New driver — start KYC
+      localStorage.setItem('db_phone', phone);
+      initKYC();
+      goTo('s-kyc');
+    }
+  } catch(e){
+    showSnack('Failed to connect. Try again.','err');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Continue →';
+}
+
+/* ══════════════════════════════════════════════════
+   KYC FLOW
+══════════════════════════════════════════════════ */
+function initKYC(){
+  kycStep = 1;
+  kycCity = ''; kycVehicle = ''; kycServices = [];
+  licenseUrl = ''; selfieUrl = ''; selfieDataURL = '';
+  showKYCStep(1);
+}
+
+function showKYCStep(n){
+  for(let i=1;i<=TOTAL_STEPS;i++){
+    document.getElementById('kyc-step-'+i).classList.toggle('active', i===n);
+    const ps = document.getElementById('ps-'+i);
+    if(i < n) ps.className = 'progress-step done';
+    else if(i === n) ps.className = 'progress-step active';
+    else ps.className = 'progress-step';
+  }
+  document.getElementById('progressLabel').textContent = `Step ${n} / ${TOTAL_STEPS}`;
+  document.getElementById('kycPrevBtn').style.display = n > 1 ? 'block' : 'none';
+  document.getElementById('kycNextBtn').textContent = n === TOTAL_STEPS ? 'Submit KYC ✓' : 'Next →';
+}
+
+function kycBack(){ if(kycStep > 1){ kycStep--; showKYCStep(kycStep); } else goTo('s-phone'); }
+function kycPrev(){ if(kycStep > 1){ kycStep--; showKYCStep(kycStep); } }
+
+function kycNext(){
+  if(kycStep === 1){
+    const name = document.getElementById('k_name').value.trim();
+    const exp  = document.getElementById('k_exp').value;
+    if(!name){ showSnack('Please enter your full name','err'); return; }
+    if(!kycCity){ showSnack('Please select your city','err'); return; }
+    if(!exp){ showSnack('Please enter your years of experience','err'); return; }
+    kycStep = 2; showKYCStep(2);
+
+  } else if(kycStep === 2){
+    if(!kycVehicle){ showSnack('Please select your vehicle type','err'); return; }
+    if(kycServices.length === 0){ showSnack('Select at least one service you can do','err'); return; }
+    kycStep = 3; showKYCStep(3);
+
+  } else if(kycStep === 3){
+    submitKYC();
+  }
+}
+
+function selectCity(el, city){
+  kycCity = city;
+  document.querySelectorAll('.city-option').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function selectVehicle(el, v){
+  kycVehicle = v;
+  document.querySelectorAll('.vehicle-option').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function toggleService(cb){
+  const val = cb.value;
+  const label = cb.closest('label');
+  if(cb.checked){
+    if(!kycServices.includes(val)) kycServices.push(val);
+    label.style.borderColor = 'var(--gold-rim)';
+    label.style.background  = 'var(--gold-dim)';
+  } else {
+    kycServices = kycServices.filter(s=>s!==val);
+    label.style.borderColor = 'var(--border2)';
+    label.style.background  = 'var(--surface2)';
+  }
+}
+
+/* Photo upload */
+function handleFileSelect(type, input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById(type+'Preview');
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    document.getElementById(type+'Icon').style.display = 'none';
+    document.getElementById(type+'Label').textContent = '✓ ' + file.name.substring(0,20);
+    document.getElementById(type+'UploadArea').classList.add('has-file');
+    if(type === 'selfie') selfieDataURL = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* Submit KYC to Firebase */
+async function submitKYC(){
+  const licenseFile = document.getElementById('licenseFile').files[0];
+  const selfieFile  = document.getElementById('selfieFile').files[0];
+
+  if(!licenseFile){ showSnack('Please upload your ID proof','err'); return; }
+  if(!selfieFile) { showSnack('Please upload your selfie','err');   return; }
+
+  const btn = document.getElementById('kycNextBtn');
+  btn.disabled = true; btn.textContent = 'Uploading…';
+
+  try {
+    /* Upload license */
+    document.getElementById('licenseBar').style.display='block';
+    const licRef  = storage.ref(`kyc/${currentPhone}/license_${Date.now()}`);
+    const licTask = licRef.put(licenseFile);
+    await new Promise((res,rej) => {
+      licTask.on('state_changed',
+        snap => {
+          const pct = (snap.bytesTransferred/snap.totalBytes)*100;
+          document.getElementById('licenseBarFill').style.width = pct+'%';
+        },
+        rej, res
+      );
+    });
+    licenseUrl = await licRef.getDownloadURL();
+
+    /* Upload selfie */
+    document.getElementById('selfieBar').style.display='block';
+    btn.textContent = 'Uploading selfie…';
+    const selfRef  = storage.ref(`kyc/${currentPhone}/selfie_${Date.now()}`);
+    const selfTask = selfRef.put(selfieFile);
+    await new Promise((res,rej) => {
+      selfTask.on('state_changed',
+        snap => {
+          const pct = (snap.bytesTransferred/snap.totalBytes)*100;
+          document.getElementById('selfieBarFill').style.width = pct+'%';
+        },
+        rej, res
+      );
+    });
+    selfieUrl = await selfRef.getDownloadURL();
+
+    btn.textContent = 'Saving profile…';
+
+    /* Save to Realtime DB */
+    const profile = {
+      name:        document.getElementById('k_name').value.trim(),
+      phone:       currentPhone,
+      city:        kycCity,
+      experience:  parseInt(document.getElementById('k_exp').value) || 0,
+      licenseNo:   document.getElementById('k_license').value.trim().toUpperCase() || null,
+      vehicleType: kycVehicle,
+      vehicleName: document.getElementById('k_vehicle_name').value.trim() || null,
+      services:    kycServices,
+      licenseUrl,
+      selfieUrl,
+      status:      'offline',
+      kycDone:     true,
+      kycStatus:   'pending', // admin can set to 'approved'
+      rating:      4.9,
+      joinedAt:    Date.now(),
+      lastSeen:    Date.now(),
+    };
+
+    await db.ref('drivers/' + currentPhone).set(profile);
+    driverData = profile;
+
+    /* Show submitted screen */
+    document.getElementById('submittedInfo').innerHTML = `
+      <div class="si-row"><span class="si-label">Name</span><span class="si-value">${profile.name}</span></div>
+      <div class="si-row"><span class="si-label">Phone</span><span class="si-value">+91 ${profile.phone}</span></div>
+      <div class="si-row"><span class="si-label">City</span><span class="si-value">${profile.city}</span></div>
+      <div class="si-row"><span class="si-label">Vehicle</span><span class="si-value">${profile.vehicleType}</span></div>
+      <div class="si-row"><span class="si-label">KYC Status</span><span class="si-value" style="color:var(--amber)">⏳ Pending Review</span></div>
+    `;
+    goTo('s-submitted');
+
+  } catch(e) {
+    console.error(e);
+    showSnack('Upload failed. Check internet & try again.','err');
+  }
+
+  btn.disabled = false; btn.textContent = 'Submit KYC ✓';
+}
+
+/* ══════════════════════════════════════════════════
+   HOME SCREEN
+══════════════════════════════════════════════════ */
+function populateHomeScreen(d){
+  /* Avatar */
+  const avatarEl = document.getElementById('profileAvatar');
+  if(d.selfieUrl){
+    avatarEl.innerHTML = `<img src="${d.selfieUrl}" alt="selfie">`;
+  } else {
+    const initials = (d.name||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    avatarEl.textContent = initials;
+  }
+  document.getElementById('profileName').textContent = d.name || 'Driver';
+  document.getElementById('profileCity').textContent = '📍 ' + (d.city || '–');
+  document.getElementById('profileExp').textContent  = '🕐 ' + (d.experience||'–') + ' yrs';
+  if(d.services && d.services.length){
+    document.getElementById('profileServices').textContent = '✓ ' + d.services.length + ' services';
+  }
+
+  /* Date badge */
+  document.getElementById('homeDateBadge').textContent =
+    new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+
+  /* Today tiles */
+  const todayKey = new Date().toISOString().slice(0,10);
+  const checkin  = d.attendance && d.attendance[todayKey] ? d.attendance[todayKey].checkin : null;
+  document.getElementById('todayCheckIn').textContent = checkin
+    ? new Date(checkin).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})
+    : '–';
+
+  /* Status */
+  applyStatus(d.status || 'offline', d.statusSince);
+}
+
+function applyStatus(status, since){
+  const btn       = document.getElementById('attendanceBtn');
+  const icon      = document.getElementById('btnIcon');
+  const text      = document.getElementById('btnText');
+  const subtext   = document.getElementById('btnSubtext');
+  const label     = document.getElementById('statusLabel');
+  const hint      = document.getElementById('statusHint');
+  const sinceEl   = document.getElementById('statusSince');
+  const tile      = document.getElementById('todayStatus');
+  const bgGlow    = document.getElementById('homeBgGlow');
+
+  if(status === 'available'){
+    btn.className   = 'attendance-btn available';
+    icon.textContent= '✅';
+    text.textContent= 'I\'M AVAILABLE';
+    subtext.textContent='Tap to go offline';
+    label.textContent  = 'You\'re Online';
+    hint.textContent   = 'Customers can be assigned to you';
+    tile.textContent   = '🟢 Online';
+    tile.style.color   = 'var(--green)';
+    bgGlow.className   = 'home-bg-glow home-glow-available';
+  } else {
+    btn.className   = 'attendance-btn offline';
+    icon.textContent= '💤';
+    text.textContent= 'GO ONLINE';
+    subtext.textContent='Tap to start accepting bookings';
+    label.textContent  = 'Currently Offline';
+    hint.textContent   = 'You\'re not visible to customers right now';
+    tile.textContent   = '⚫ Offline';
+    tile.style.color   = 'var(--cream60)';
+    bgGlow.className   = 'home-bg-glow home-glow-offline';
+  }
+
+  if(since){
+    const diff = Date.now() - since;
+    const hrs  = Math.floor(diff/3600000);
+    const mins = Math.floor((diff%3600000)/60000);
+    sinceEl.textContent = status==='available'
+      ? `Online for ${hrs>0?hrs+'h ':''} ${mins}m`
+      : `Offline since ${new Date(since).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}`;
+  } else {
+    sinceEl.textContent = '';
+  }
+}
+
+async function toggleAttendance(){
+  if(!currentPhone) return;
+  const btn = document.getElementById('attendanceBtn');
+  btn.style.opacity = '0.6';
+  btn.style.pointerEvents = 'none';
+
+  const currentStatus = driverData?.status || 'offline';
+  const newStatus     = currentStatus === 'available' ? 'offline' : 'available';
+  const now           = Date.now();
+  const todayKey      = new Date().toISOString().slice(0,10);
+
+  const updates = {
+    status:      newStatus,
+    statusSince: now,
+    lastSeen:    now,
+  };
+
+  /* Record first check-in of the day */
+  if(newStatus === 'available'){
+    const snap = await db.ref(`drivers/${currentPhone}/attendance/${todayKey}/checkin`).once('value');
+    if(!snap.exists()){
+      updates[`attendance/${todayKey}/checkin`] = now;
+    }
+    updates[`attendance/${todayKey}/lastOnline`] = now;
+  }
+
+  try {
+    await db.ref('drivers/' + currentPhone).update(updates);
+    if(driverData) driverData.status = newStatus;
+    applyStatus(newStatus, now);
+
+    /* Update today's check-in display */
+    if(newStatus === 'available'){
+      const snap2 = await db.ref(`drivers/${currentPhone}/attendance/${todayKey}/checkin`).once('value');
+      if(snap2.exists()){
+        document.getElementById('todayCheckIn').textContent =
+          new Date(snap2.val()).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+      }
+    }
+    showSnack(newStatus==='available' ? '✓ You\'re now Online!' : '✓ You\'re now Offline', newStatus==='available'?'ok':'');
+  } catch(e){
+    showSnack('Failed to update. Try again.','err');
+  }
+
+  btn.style.opacity = '1';
+  btn.style.pointerEvents = 'auto';
+}
+
+/* Real-time listener so status syncs across devices */
+function listenForStatusChanges(phone){
+  db.ref('drivers/' + phone).on('value', snap => {
+    if(snap.exists()){
+      const d = snap.val();
+      driverData = d;
+      applyStatus(d.status || 'offline', d.statusSince);
+    }
+  });
+}
+
+function confirmLogout(){
+  if(confirm('Switch to a different driver account?')){
+    localStorage.removeItem('db_phone');
+    db.ref('drivers/' + currentPhone).off();
+    location.reload();
+  }
+}
 </script>
 </body>
 </html>
