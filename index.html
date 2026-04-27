@@ -3,1070 +3,815 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>DriveBuddy — Live Ride Platform</title>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<title>DriveBuddy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;font-family:'DM Sans',sans-serif;background:#EEF2F7;overflow-x:hidden}
-:root{
-  --blue:#1D4ED8;--blue-l:#EFF6FF;--blue-m:#DBEAFE;
-  --green:#059669;--green-l:#ECFDF5;
-  --amber:#D97706;--amber-l:#FFFBEB;
-  --red:#DC2626;--red-l:#FEF2F2;
-  --text:#0F172A;--text2:#475569;--text3:#94A3B8;
-  --border:#E2E8F0;--bg:#FFFFFF;--surface:#F8FAFC;--surface2:#F1F5F9;
-  --gold:#C9993A;--radius:14px;
-  --ease:cubic-bezier(0.22,1,0.36,1);
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --black: #0A0A0A;
+  --white: #FFFFFF;
+  --gray-1: #F5F5F5;
+  --gray-2: #E8E8E8;
+  --gray-3: #ABABAB;
+  --gray-4: #6B6B6B;
+  --sheet-radius: 20px;
+  --font: 'Plus Jakarta Sans', sans-serif;
 }
 
-/* ═══════════════════════════════════════ TOP BAR */
-.top-bar{
-  position:sticky;top:0;z-index:200;
-  background:var(--text);
-  padding:.55rem 1.25rem;
-  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+html, body { height: 100%; font-family: var(--font); background: #fff; overflow: hidden; }
+
+/* ── MAP ── */
+#map {
+  position: fixed; inset: 0;
+  z-index: 0;
+  transition: filter 0.4s ease;
 }
-.brand{font-family:'Sora',sans-serif;font-size:.95rem;font-weight:800;color:#fff;display:flex;align-items:center;gap:.4rem;white-space:nowrap}
-.brand span{color:var(--gold)}
-.mode-tabs{display:flex;gap:.2rem;background:rgba(255,255,255,.1);border-radius:8px;padding:.2rem}
-.mtab{padding:.3rem .8rem;border-radius:6px;border:none;background:transparent;color:rgba(255,255,255,.55);font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
-.mtab.active{background:white;color:var(--text)}
-.sys-badge{font-size:.62rem;color:var(--green);background:rgba(5,150,105,.15);border:1px solid rgba(5,150,105,.3);border-radius:20px;padding:.22rem .65rem;display:flex;align-items:center;gap:.3rem;white-space:nowrap}
-.ldot{width:5px;height:5px;background:var(--green);border-radius:50%;animation:ldpulse 1.5s infinite}
-@keyframes ldpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.6)}}
-.demo-btn{padding:.35rem .9rem;background:var(--gold);color:var(--text);border:none;border-radius:6px;font-family:'Sora',sans-serif;font-size:.7rem;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap}
-.demo-btn:hover{background:#E5B355}
+#map.searching-blur { filter: brightness(0.6); }
 
-/* ═══════════════════════════════════════ LAYOUT */
-.main{display:flex;gap:1.2rem;padding:1.2rem;max-width:1160px;margin:0 auto;align-items:flex-start;flex-wrap:wrap;justify-content:center}
-
-/* ═══════════════════════════════════════ PHONE */
-.phone-wrap{flex-shrink:0}
-.phone-frame{
-  width:370px;height:710px;
-  background:white;border-radius:42px;overflow:hidden;
-  position:relative;
-  box-shadow:0 40px 80px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.07),inset 0 1px 0 rgba(255,255,255,.4);
-  border:8px solid #1A1A2E;
+/* ── TOP BAR ── */
+.top-bar {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 48px 16px 0;
+  pointer-events: none;
 }
-.notch{
-  position:absolute;top:0;left:50%;transform:translateX(-50%);
-  width:110px;height:26px;background:#1A1A2E;border-radius:0 0 16px 16px;
-  z-index:99;display:flex;align-items:center;justify-content:center;
+.top-bar > * { pointer-events: all; }
+
+/* ── LOCATION INPUTS ── */
+.location-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.14);
+  overflow: hidden;
 }
-.notch::before{content:'';width:36px;height:4px;background:#2E2E44;border-radius:2px}
-.phone-inner{width:100%;height:100%;position:relative;overflow:hidden}
-
-/* MAP CANVAS */
-#mapCanvas{position:absolute;inset:0;width:100%;height:100%}
-
-/* STATUS BAR */
-.sbar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:flex-end;padding:0 1rem .4rem;justify-content:space-between;z-index:10;font-size:.7rem;font-weight:600;color:var(--text);pointer-events:none}
-
-/* GPS BAR */
-.gps-bar{
-  position:absolute;top:44px;left:0;right:0;
-  padding:.38rem 1rem;display:flex;align-items:center;gap:.45rem;
-  font-size:.7rem;font-weight:600;z-index:10;transition:all .3s;
+.loc-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px;
+  cursor: text;
 }
-.gps-ok{background:rgba(236,253,245,.96);color:var(--green);border-bottom:1px solid rgba(5,150,105,.18)}
-.gps-warn{background:rgba(255,251,235,.96);color:var(--amber);border-bottom:1px solid rgba(217,119,6,.18)}
-.gps-err{background:rgba(254,242,242,.96);color:var(--red);border-bottom:1px solid rgba(220,38,38,.18);animation:shake .45s ease}
-@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
-
-/* SEARCH FLOAT */
-.search-float{position:absolute;top:80px;left:.9rem;right:.9rem;z-index:10}
-.search-box{background:white;border-radius:var(--radius);box-shadow:0 4px 24px rgba(0,0,0,.12);overflow:hidden}
-.sf-row{display:flex;align-items:center;gap:.65rem;padding:.85rem 1rem;border-bottom:1px solid var(--border)}
-.sf-row:last-child{border-bottom:none}
-.sf-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.from-dot{background:var(--text)}.to-dot{background:var(--blue)}
-.sf-row input{flex:1;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:.83rem;color:var(--text);background:transparent}
-.sf-row input::placeholder{color:var(--text3)}
-.sf-vline{width:1px;height:16px;background:var(--border);margin-left:4px}
-
-/* MAP CONTROLS */
-.map-ctrl{position:absolute;right:.9rem;top:150px;display:flex;flex-direction:column;gap:.35rem;z-index:10}
-.mc-btn{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:white;font-size:.9rem;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.09);transition:all .2s}
-.mc-btn:hover{border-color:var(--blue);color:var(--blue)}
-
-/* BOTTOM SHEET */
-.bsheet{
-  position:absolute;bottom:0;left:0;right:0;
-  background:white;border-radius:22px 22px 0 0;
-  box-shadow:0 -6px 32px rgba(0,0,0,.1);
-  z-index:20;padding-bottom:72px;
-  transition:transform .4s var(--ease);
+.loc-row + .loc-row {
+  border-top: 1px solid var(--gray-2);
 }
-.bhandle{width:34px;height:4px;background:var(--border);border-radius:2px;margin:.7rem auto 0}
-.bsc{padding:.9rem 1.1rem}
-
-/* STAGE PIPS */
-.stages{display:flex;gap:.3rem;margin-bottom:.9rem}
-.pip{flex:1;height:3px;background:var(--border);border-radius:2px;transition:background .5s}
-.pip.done{background:var(--blue)}
-.pip.active{background:var(--blue);animation:pipAnim 1s ease infinite}
-@keyframes pipAnim{0%,100%{opacity:1}50%{opacity:.45}}
-
-/* DRIVER CARD */
-.dcard{display:flex;align-items:center;gap:.8rem;background:var(--surface);border-radius:var(--radius);padding:.85rem;margin:.4rem 0}
-.dav{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;font-size:1rem;color:white;flex-shrink:0}
-.dinfo{flex:1}
-.dname{font-family:'Sora',sans-serif;font-weight:700;font-size:.9rem;color:var(--text)}
-.dsub{font-size:.74rem;color:var(--text2);margin-top:.1rem}
-.drating{font-size:.72rem;color:var(--amber);font-weight:600;margin-top:.1rem}
-.ibt{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;font-size:.85rem;flex-shrink:0}
-.ibt:hover{background:var(--blue-l);border-color:var(--blue)}
-
-/* ETA BAR */
-.eta-bar{display:flex;gap:.8rem;padding:.7rem 0;border-bottom:1px solid var(--border);margin-bottom:.7rem}
-.eta-it{text-align:center;flex:1}
-.eta-val{font-family:'Sora',sans-serif;font-size:1.25rem;font-weight:800;color:var(--blue);line-height:1}
-.eta-lbl{font-size:.62rem;color:var(--text3);margin-top:.18rem;text-transform:uppercase;letter-spacing:.05em}
-
-/* SONAR SEARCH */
-.search-anim{display:flex;flex-direction:column;align-items:center;padding:1.2rem 0}
-.sonar{width:76px;height:76px;position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:.9rem}
-.sonar-core{width:38px;height:38px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:1rem;position:relative;z-index:2}
-.sring{position:absolute;border:2px solid var(--blue);border-radius:50%;animation:sonarX 2s ease-out infinite;opacity:0;left:50%;top:50%;transform:translate(-50%,-50%)}
-.sring:nth-child(2){animation-delay:.6s}
-.sring:nth-child(3){animation-delay:1.2s}
-@keyframes sonarX{0%{width:38px;height:38px;opacity:.8}100%{width:96px;height:96px;opacity:0}}
-
-/* BUTTONS */
-.btn-p{width:100%;background:var(--blue);color:white;border:none;border-radius:var(--radius);padding:.9rem;font-family:'Sora',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:.45rem}
-.btn-p:hover{background:#1E40AF;transform:translateY(-1px)}
-.btn-p:disabled{opacity:.4;cursor:not-allowed;transform:none}
-.btn-o{background:white;color:var(--text);border:1px solid var(--border);border-radius:12px;padding:.65rem 1rem;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;width:100%}
-.btn-o:hover{border-color:var(--blue);color:var(--blue)}
-.btn-g{background:var(--green);color:white;border:none;border-radius:var(--radius);padding:.9rem;font-family:'Sora',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .2s;flex:1}
-.btn-r{background:var(--red);color:white;border:none;border-radius:var(--radius);padding:.9rem;font-family:'Sora',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .2s;flex:1}
-
-/* BOTTOM NAV */
-.bnav{position:absolute;bottom:0;left:0;right:0;height:68px;background:white;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;z-index:30;padding-bottom:6px}
-.nit{display:flex;flex-direction:column;align-items:center;gap:.15rem;padding:.4rem .9rem;cursor:pointer;border-radius:10px;min-width:52px;transition:all .2s}
-.nit.active .nlbl{color:var(--blue)}
-.nico{font-size:1.15rem}
-.nlbl{font-size:.6rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.03em}
-
-/* PRICE CARD */
-.price-card{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:.9rem;margin:.7rem 0}
-.prow{display:flex;justify-content:space-between;align-items:center;padding:.25rem 0}
-.prow:not(:last-child){border-bottom:1px solid var(--border)}
-.plbl{font-size:.78rem;color:var(--text2)}
-.pval{font-size:.82rem;font-weight:700;color:var(--text)}
-.ptotal .plbl{font-weight:700;color:var(--text);font-size:.82rem}
-.ptotal .pval{color:var(--blue);font-size:.95rem}
-
-/* SERVICE TILES */
-.srv-tiles{display:flex;gap:.6rem;margin-bottom:.9rem;overflow-x:auto;padding-bottom:.2rem;-webkit-overflow-scrolling:touch}
-.srv-tiles::-webkit-scrollbar{display:none}
-.stile{flex-shrink:0;border-radius:var(--radius);padding:.65rem .9rem;text-align:center;cursor:pointer;transition:all .2s;border:1px solid transparent;min-width:72px}
-.stile-active{background:var(--blue);color:white}
-.stile-inactive{background:var(--surface);border-color:var(--border);color:var(--text)}
-.stile-ico{font-size:1.2rem;margin-bottom:.25rem}
-.stile-name{font-size:.68rem;font-weight:600;white-space:nowrap}
-.stile-price{font-size:.6rem;opacity:.7;margin-top:.1rem}
-
-/* ANTI-CHEAT PANEL */
-.ac-panel{background:var(--surface);border-radius:var(--radius);padding:.85rem;margin:.4rem 0}
-.ac-title{font-family:'Sora',sans-serif;font-size:.75rem;font-weight:700;margin-bottom:.5rem;color:var(--text)}
-.ac-row{display:flex;align-items:center;justify-content:space-between;padding:.28rem 0}
-.ac-lbl{font-size:.74rem;color:var(--text2);display:flex;align-items:center;gap:.35rem}
-.ac-s{font-size:.68rem;font-weight:700;padding:.18rem .55rem;border-radius:20px}
-.ac-ok{background:var(--green-l);color:var(--green)}
-.ac-warn{background:var(--amber-l);color:var(--amber)}
-.ac-err{background:var(--red-l);color:var(--red)}
-
-/* ONLINE TOGGLE */
-.otoggle{width:88px;height:88px;border-radius:50%;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;transition:all .35s;box-shadow:0 8px 24px rgba(0,0,0,.12)}
-.otoggle.online{background:var(--green);color:white}
-.otoggle.offline{background:var(--surface);color:var(--text3);border:2px solid var(--border)}
-.olbl{margin-top:.6rem;font-family:'Sora',sans-serif;font-size:.8rem;font-weight:700;color:var(--text2)}
-
-/* INCOMING ALERT */
-.inc-alert{position:absolute;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;z-index:50;padding:1rem;animation:fadeI .3s ease}
-@keyframes fadeI{from{opacity:0}to{opacity:1}}
-.inc-card{background:white;border-radius:22px;padding:1.4rem;width:100%;animation:slideU .4s var(--ease)}
-@keyframes slideU{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
-.timer-ring{width:58px;height:58px;border-radius:50%;background:var(--blue-l);border:3px solid var(--blue);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:1.3rem;font-weight:800;color:var(--blue);margin:0 auto .9rem;transition:border-color .3s}
-.timer-ring.urgent{border-color:var(--red);color:var(--red);background:var(--red-l)}
-
-/* ROUTE LOG */
-.rlog{background:var(--surface);border-radius:10px;padding:.7rem;max-height:100px;overflow-y:auto;font-size:.64rem;color:var(--text2);line-height:1.9;font-family:'DM Mono','Courier New',monospace}
-.rlog::-webkit-scrollbar{width:2px}
-.rlog::-webkit-scrollbar-thumb{background:var(--border)}
-
-/* RATING STARS */
-.rstars{display:flex;gap:.45rem;justify-content:center;padding:.8rem 0}
-.rstar{font-size:1.9rem;cursor:pointer;transition:transform .2s;opacity:.25;color:var(--amber)}
-.rstar.lit{opacity:1}
-.rstar:hover{transform:scale(1.2)}
-
-/* SECTION LABEL */
-.slbl{font-size:.68rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.4rem}
-
-/* TODAY STATS (driver) */
-.dstats{display:flex;gap:.55rem;margin-top:.7rem}
-.dstat{flex:1;text-align:center;background:var(--surface);border-radius:12px;padding:.7rem .4rem}
-.dstat-num{font-family:'Sora',sans-serif;font-size:1.2rem;font-weight:800;line-height:1}
-.dstat-lbl{font-size:.6rem;color:var(--text3);margin-top:.2rem;text-transform:uppercase}
-
-/* ═══════════════════════════════════════ ADMIN */
-.admin{flex:1;min-width:280px;max-width:660px}
-.adm-hdr{background:white;border-radius:16px;padding:1.1rem 1.3rem;margin-bottom:.9rem;box-shadow:0 2px 12px rgba(0,0,0,.05)}
-.adm-title{font-family:'Sora',sans-serif;font-size:1.05rem;font-weight:800;color:var(--text)}
-.adm-sub{font-size:.76rem;color:var(--text3);margin-top:.15rem}
-
-.srow{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:.9rem}
-.scard{background:white;border-radius:13px;padding:.9rem;box-shadow:0 2px 10px rgba(0,0,0,.05);text-align:center}
-.snum{font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:800;color:var(--text);line-height:1}
-.slb{font-size:.62rem;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-top:.25rem}
-.scard.cblue .snum{color:var(--blue)}.scard.cgreen .snum{color:var(--green)}.scard.camber .snum{color:var(--amber)}.scard.cred .snum{color:var(--red)}
-
-.adm-card{background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.05);margin-bottom:.9rem}
-.adm-card-hdr{padding:.9rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.adm-card-title{font-family:'Sora',sans-serif;font-size:.85rem;font-weight:700;color:var(--text)}
-#adminMapCanvas{width:100%;height:210px;display:block}
-
-.chip{display:inline-flex;align-items:center;gap:.25rem;background:var(--blue-l);color:var(--blue);border-radius:20px;padding:.22rem .65rem;font-size:.68rem;font-weight:700}
-.chip-red{background:var(--red-l);color:var(--red)}
-.chip-green{background:var(--green-l);color:var(--green)}
-.chip-amber{background:var(--amber-l);color:var(--amber)}
-
-.alrt-badge{background:var(--red);color:white;border-radius:20px;font-size:.62rem;font-weight:700;padding:.1rem .48rem}
-
-.ait{padding:.7rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:.7rem;animation:aIn .4s ease}
-@keyframes aIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
-.ait:last-child{border-bottom:none}
-.ait-ico{font-size:.95rem;flex-shrink:0;margin-top:.1rem}
-.ait-title{font-size:.8rem;font-weight:600;color:var(--text)}
-.ait-time{font-size:.68rem;color:var(--text3);margin-top:.1rem}
-
-.dtbl-hdr{padding:.9rem 1.2rem;border-bottom:1px solid var(--border)}
-.dr-row{padding:.75rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem}
-.dr-row:last-child{border-bottom:none}
-.drav{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;color:white;flex-shrink:0}
-.drinf{flex:1}
-.drname{font-size:.8rem;font-weight:600;color:var(--text)}
-.drsub{font-size:.68rem;color:var(--text3)}
-.drst{font-size:.68rem;font-weight:700;padding:.18rem .55rem;border-radius:20px}
-.dr-trip{background:var(--blue-l);color:var(--blue)}
-.dr-online{background:var(--green-l);color:var(--green)}
-.dr-offline{background:var(--surface);color:var(--text3)}
-.dr-alert{background:var(--red-l);color:var(--red)}
-
-/* ADMIN ACTIONS */
-.adm-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.9rem}
-.adm-action-btn{padding:.5rem 1rem;border:1px solid var(--border);background:white;border-radius:9px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;color:var(--text)}
-.adm-action-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-l)}
-.adm-action-btn.red:hover{border-color:var(--red);color:var(--red);background:var(--red-l)}
-
-/* HIDDEN */
-.hidden{display:none!important}
-/* SCROLL */
-::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-
-/* ═══════════════════════════════════════ MOBILE */
-@media(max-width:500px){
-  .main{padding:.6rem;gap:.8rem}
-  .phone-frame{width:100vw;height:calc(100svh - 54px);border-radius:0;border:none;box-shadow:none}
-  .notch{display:none}
-  .admin{display:none}
-  .mode-tabs{display:none}
-  .sys-badge{display:none}
-  .demo-btn{font-size:.65rem;padding:.3rem .6rem}
+.loc-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
 }
-@media(max-width:960px){.srow{grid-template-columns:repeat(2,1fr)}}
+.loc-dot.pickup { background: var(--black); }
+.loc-dot.drop { background: #276EF1; }
+.loc-line {
+  width: 2px; height: 14px;
+  background: var(--gray-2);
+  margin-left: 4px;
+}
+.loc-input {
+  flex: 1; border: none; outline: none;
+  font-family: var(--font); font-size: 14px; font-weight: 500;
+  color: var(--black); background: transparent;
+}
+.loc-input::placeholder { color: var(--gray-3); font-weight: 400; }
+
+/* ── BACK / MENU BUTTON ── */
+.icon-btn {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: white;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  margin-bottom: 10px;
+  transition: transform 0.15s;
+}
+.icon-btn:active { transform: scale(0.92); }
+
+/* ── BOTTOM SHEET ── */
+.bottom-sheet {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  z-index: 100;
+  background: white;
+  border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.10);
+  padding: 0 16px 34px;
+  transition: transform 0.4s cubic-bezier(0.22,1,0.36,1);
+}
+.sheet-handle {
+  width: 36px; height: 4px;
+  background: var(--gray-2);
+  border-radius: 2px;
+  margin: 10px auto 16px;
+}
+
+/* SCREENS */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ── HOME SHEET ── */
+.ride-type-row {
+  display: flex; gap: 8px; margin-bottom: 16px;
+  overflow-x: auto; padding-bottom: 2px;
+}
+.ride-type-row::-webkit-scrollbar { display: none; }
+.ride-chip {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  border-radius: 100px;
+  border: 1.5px solid var(--gray-2);
+  font-family: var(--font); font-size: 13px; font-weight: 600;
+  cursor: pointer; background: white; color: var(--black);
+  transition: all 0.2s;
+}
+.ride-chip.active {
+  background: var(--black); color: white; border-color: var(--black);
+}
+.fare-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--gray-1);
+}
+.fare-label { font-size: 14px; color: var(--gray-4); font-weight: 500; }
+.fare-value { font-size: 16px; font-weight: 700; color: var(--black); }
+
+/* ── PRIMARY BUTTON ── */
+.btn-primary {
+  width: 100%; padding: 16px;
+  background: var(--black); color: white;
+  border: none; border-radius: 12px;
+  font-family: var(--font); font-size: 15px; font-weight: 700;
+  cursor: pointer; margin-top: 14px;
+  transition: transform 0.15s, background 0.15s;
+  letter-spacing: 0.01em;
+}
+.btn-primary:active { transform: scale(0.98); background: #222; }
+.btn-primary.secondary {
+  background: var(--gray-1); color: var(--black);
+}
+
+/* ── SEARCHING ── */
+.searching-center {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 24px 0 8px;
+  gap: 12px;
+}
+.spinner {
+  width: 52px; height: 52px; border-radius: 50%;
+  border: 3px solid var(--gray-2);
+  border-top-color: var(--black);
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.searching-title {
+  font-size: 17px; font-weight: 700; color: var(--black);
+}
+.searching-sub {
+  font-size: 13px; color: var(--gray-3); font-weight: 500;
+  margin-top: -6px;
+}
+
+/* ── ASSIGNED / TRIP ── */
+.driver-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 6px 0 14px;
+  border-bottom: 1px solid var(--gray-1);
+  margin-bottom: 14px;
+}
+.driver-avatar {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: var(--black);
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: 700; font-size: 15px; flex-shrink: 0;
+}
+.driver-info { flex: 1; }
+.driver-name { font-size: 16px; font-weight: 700; color: var(--black); }
+.driver-sub { font-size: 13px; color: var(--gray-4); margin-top: 2px; font-weight: 500; }
+.driver-rating {
+  font-size: 13px; font-weight: 700; color: var(--black);
+  display: flex; align-items: center; gap: 3px;
+}
+
+.call-btn {
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 1.5px solid var(--gray-2);
+  background: white; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; transition: background 0.15s;
+}
+.call-btn:active { background: var(--gray-1); }
+
+.eta-row {
+  display: flex; gap: 0; margin-bottom: 14px;
+}
+.eta-item {
+  flex: 1; text-align: center;
+  padding: 10px 0;
+}
+.eta-item + .eta-item {
+  border-left: 1px solid var(--gray-2);
+}
+.eta-val { font-size: 22px; font-weight: 800; color: var(--black); line-height: 1; }
+.eta-lbl { font-size: 11px; color: var(--gray-3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
+
+/* ── TRIP LIVE ── */
+.trip-info-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 0; border-bottom: 1px solid var(--gray-1); margin-bottom: 14px;
+}
+.live-badge {
+  background: #E8F5E9; color: #2E7D32;
+  font-size: 11px; font-weight: 700;
+  padding: 4px 10px; border-radius: 100px;
+  letter-spacing: 0.04em;
+}
+.trip-label { font-size: 14px; font-weight: 600; color: var(--black); flex: 1; }
+
+/* ── COMPLETE ── */
+.complete-center {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 10px 0 20px; gap: 6px; text-align: center;
+}
+.check-icon { font-size: 44px; line-height: 1; }
+.complete-title { font-size: 20px; font-weight: 800; color: var(--black); }
+.complete-sub { font-size: 14px; color: var(--gray-4); font-weight: 500; }
+.fare-total {
+  font-size: 32px; font-weight: 800; color: var(--black);
+  margin: 4px 0 2px;
+}
+
+/* ── RATING ── */
+.stars { display: flex; gap: 8px; justify-content: center; padding: 8px 0 16px; }
+.star {
+  font-size: 28px; cursor: pointer; color: var(--gray-2);
+  transition: color 0.15s, transform 0.15s;
+}
+.star.lit { color: #F59E0B; }
+.star:hover { transform: scale(1.15); }
+
+/* ── MAP PINS (Leaflet custom) ── */
+.map-car-icon {
+  background: var(--black); border-radius: 50%; padding: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  font-size: 16px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px;
+}
+
+/* ETA FLOATING CHIP */
+.eta-float {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -140%);
+  background: white;
+  border-radius: 100px;
+  padding: 6px 14px;
+  font-family: var(--font); font-size: 13px; font-weight: 700;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  z-index: 50; pointer-events: none;
+  opacity: 0; transition: opacity 0.3s;
+  white-space: nowrap;
+}
+.eta-float.visible { opacity: 1; }
+
+/* ── LEAFLET OVERRIDES ── */
+.leaflet-control-attribution { display: none !important; }
+.leaflet-control-zoom { border: none !important; }
+.leaflet-control-zoom a {
+  width: 36px !important; height: 36px !important;
+  line-height: 36px !important;
+  border-radius: 8px !important; border: none !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
+  font-size: 18px !important; color: var(--black) !important;
+  margin-bottom: 4px !important;
+}
+.leaflet-top.leaflet-right { top: auto !important; bottom: calc(30vh + 20px) !important; right: 14px !important; }
+
+/* ── STATUS BAR ── */
+.status-bar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 44px; z-index: 200; pointer-events: none;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  padding: 0 20px 6px; font-size: 13px; font-weight: 700; color: transparent;
+}
+
+/* ── MODE SWITCHER (dev helper, clean) ── */
+.mode-switch {
+  position: fixed; top: 48px; right: 16px; z-index: 300;
+  display: flex; gap: 4px;
+  background: rgba(255,255,255,0.92); border-radius: 100px;
+  padding: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  backdrop-filter: blur(8px);
+}
+.msw-btn {
+  padding: 5px 12px; border-radius: 100px; border: none;
+  font-family: var(--font); font-size: 12px; font-weight: 700;
+  cursor: pointer; background: transparent; color: var(--gray-4);
+  transition: all 0.2s;
+}
+.msw-btn.active { background: var(--black); color: white; }
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════ TOP BAR -->
-<div class="top-bar">
-  <div class="brand">🚗 Drive<span>Buddy</span></div>
-  <div class="mode-tabs">
-    <button class="mtab active" onclick="setView('user',this)">👤 User</button>
-    <button class="mtab" onclick="setView('driver',this)">🚗 Driver</button>
+<!-- MAP -->
+<div id="map"></div>
+
+<!-- STATUS BAR (styling only) -->
+<div class="status-bar"><span id="clockEl"></span><span>●●● ▌▌</span></div>
+
+<!-- ETA FLOAT LABEL -->
+<div class="eta-float" id="etaFloat">Driver 8 min away</div>
+
+<!-- TOP BAR -->
+<div class="top-bar" id="topBar">
+  <!-- HOME: location search card -->
+  <div id="homeTop">
+    <div class="location-card">
+      <div class="loc-row" onclick="focusInput('pickup')">
+        <div class="loc-dot pickup"></div>
+        <input class="loc-input" id="pickupInput" value="Shankar Nagar, Raipur" placeholder="Pickup location">
+      </div>
+      <div style="padding-left: 20px;"><div class="loc-line"></div></div>
+      <div class="loc-row" onclick="focusInput('drop')">
+        <div class="loc-dot drop"></div>
+        <input class="loc-input" id="dropInput" value="VIP Road, Raipur" placeholder="Where to?">
+      </div>
+    </div>
   </div>
-  <div style="display:flex;align-items:center;gap:.5rem">
-    <button class="demo-btn" onclick="autoDemo()">▶ Demo Flow</button>
-    <div class="sys-badge"><div class="ldot"></div>Live</div>
+  <!-- ASSIGNED / TRIP: back button -->
+  <div id="rideTop" style="display:none;">
+    <button class="icon-btn" onclick="cancelRide()">✕</button>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════ MAIN -->
-<div class="main">
+<!-- MODE SWITCHER (demo helper) -->
+<div class="mode-switch">
+  <button class="msw-btn active" onclick="setDemo('user')">👤 User</button>
+  <button class="msw-btn" onclick="setDemo('driver')">🚗 Driver</button>
+</div>
 
-  <!-- ════════════════ PHONE FRAME -->
-  <div class="phone-wrap">
-    <div class="phone-frame">
-      <div class="notch"></div>
-      <div class="phone-inner">
+<!-- BOTTOM SHEET -->
+<div class="bottom-sheet" id="sheet">
+  <div class="sheet-handle"></div>
 
-        <!-- MAP -->
-        <canvas id="mapCanvas"></canvas>
-
-        <!-- STATUS BAR -->
-        <div class="sbar"><span id="sbarTime">9:41</span><span style="letter-spacing:.04em">📶 ████ 🔋</span></div>
-
-        <!-- ══════════ USER VIEW -->
-        <div id="userView">
-          <div class="gps-bar gps-ok" id="userGps">📍 &nbsp;GPS Active · Shankar Nagar, Raipur</div>
-
-          <div class="search-float" id="searchFloat">
-            <div class="search-box">
-              <div class="sf-row"><div class="sf-dot from-dot"></div><input type="text" value="Shankar Nagar, Raipur" id="fromInp" placeholder="Pickup location"></div>
-              <div style="padding-left:1.35rem"><div class="sf-vline"></div></div>
-              <div class="sf-row"><div class="sf-dot to-dot"></div><input type="text" value="VIP Road, Raipur" id="toInp" placeholder="Where to?"><span style="font-size:.75rem;color:var(--text3)">🔍</span></div>
-            </div>
-          </div>
-
-          <div class="map-ctrl" id="mapCtrl">
-            <button class="mc-btn" onclick="doZoom(1.25)">+</button>
-            <button class="mc-btn" onclick="doZoom(.8)">−</button>
-            <button class="mc-btn" onclick="centerMap()" title="Center">⊙</button>
-          </div>
-
-          <!-- SHEET 0: IDLE -->
-          <div class="bsheet" id="sh0" style="height:310px">
-            <div class="bhandle"></div>
-            <div class="bsc">
-              <div class="slbl">Choose Service</div>
-              <div class="srv-tiles" id="srvTiles">
-                <div class="stile stile-active" onclick="pickSrv(this,'personal')"><div class="stile-ico">🚗</div><div class="stile-name">Personal</div><div class="stile-price">₹300+</div></div>
-                <div class="stile stile-inactive" onclick="pickSrv(this,'night')"><div class="stile-ico">🌙</div><div class="stile-name">Night</div><div class="stile-price">₹500</div></div>
-                <div class="stile stile-inactive" onclick="pickSrv(this,'hospital')"><div class="stile-ico">🏥</div><div class="stile-name">Medical</div><div class="stile-price">Priority</div></div>
-                <div class="stile stile-inactive" onclick="pickSrv(this,'outstation')"><div class="stile-ico">✈️</div><div class="stile-name">Outstation</div><div class="stile-price">₹1200+</div></div>
-              </div>
-              <div class="price-card">
-                <div class="prow"><span class="plbl">Base fare (3 hrs)</span><span class="pval">₹600</span></div>
-                <div class="prow"><span class="plbl">Driver verified fee</span><span class="pval">Included</span></div>
-                <div class="prow ptotal"><span class="plbl">Estimated Total</span><span class="pval">₹600</span></div>
-              </div>
-              <button class="btn-p" onclick="startBooking()">🚗 &nbsp;Book Driver Now</button>
-            </div>
-          </div>
-
-          <!-- SHEET 1: SEARCHING -->
-          <div class="bsheet hidden" id="sh1" style="height:250px">
-            <div class="bhandle"></div>
-            <div class="bsc">
-              <div class="stages"><div class="pip done"></div><div class="pip active"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
-              <div class="search-anim">
-                <div class="sonar"><div class="sring"></div><div class="sring"></div><div class="sonar-core">🚗</div></div>
-                <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:.95rem;color:var(--text)">Finding your driver…</div>
-                <div style="font-size:.76rem;color:var(--text3);margin-top:.25rem">3 verified drivers nearby</div>
-              </div>
-              <button class="btn-o" onclick="setState('idle')">Cancel Request</button>
-            </div>
-          </div>
-
-          <!-- SHEET 2: ASSIGNED / ARRIVING -->
-          <div class="bsheet hidden" id="sh2" style="height:300px">
-            <div class="bhandle"></div>
-            <div class="bsc">
-              <div class="stages"><div class="pip done"></div><div class="pip done"></div><div class="pip active"></div><div class="pip"></div><div class="pip"></div></div>
-              <div style="font-size:.74rem;font-weight:700;color:var(--green);margin-bottom:.6rem;display:flex;align-items:center;gap:.35rem">✅ Driver Assigned — Arriving in <span id="etaMin" style="color:var(--blue)">8</span> min</div>
-              <div class="dcard">
-                <div class="dav" style="background:linear-gradient(135deg,#1D4ED8,#7C3AED)">RK</div>
-                <div class="dinfo">
-                  <div class="dname">Rakesh Kumar</div>
-                  <div class="dsub">🚗 CG-04 AB-1234 · Swift Dzire</div>
-                  <div class="drating">★ 4.9 &nbsp;<span style="color:var(--text3);font-weight:400">(284 rides)</span></div>
-                </div>
-                <div style="display:flex;gap:.4rem">
-                  <div class="ibt" onclick="alert('📞 Calling Rakesh: 9111473929')">📞</div>
-                  <div class="ibt">💬</div>
-                </div>
-              </div>
-              <div class="eta-bar">
-                <div class="eta-it"><div class="eta-val" id="etaMinV">8</div><div class="eta-lbl">Min Away</div></div>
-                <div class="eta-it"><div class="eta-val" id="etaDistV">2.4</div><div class="eta-lbl">km Away</div></div>
-                <div class="eta-it"><div class="eta-val">🛡️</div><div class="eta-lbl">Verified</div></div>
-              </div>
-              <div style="font-size:.7rem;color:var(--text3);text-align:center">📍 Real-time GPS tracking active</div>
-            </div>
-          </div>
-
-          <!-- SHEET 3: TRIP -->
-          <div class="bsheet hidden" id="sh3" style="height:300px">
-            <div class="bhandle"></div>
-            <div class="bsc">
-              <div class="stages"><div class="pip done"></div><div class="pip done"></div><div class="pip done"></div><div class="pip active"></div><div class="pip"></div></div>
-              <div style="font-size:.74rem;font-weight:700;color:var(--blue);margin-bottom:.6rem">🚗 Trip In Progress — GPS Locked</div>
-              <div class="dcard">
-                <div class="dav" style="background:linear-gradient(135deg,#059669,#0D9488)">RK</div>
-                <div class="dinfo"><div class="dname">Rakesh Kumar</div><div class="dsub" id="tripStatus">📍 En route to destination…</div></div>
-                <div class="ibt" onclick="alert('📞 Calling Rakesh: 9111473929')">📞</div>
-              </div>
-              <div class="eta-bar">
-                <div class="eta-it"><div class="eta-val" id="tEta">14</div><div class="eta-lbl">Min Left</div></div>
-                <div class="eta-it"><div class="eta-val" id="tDist">0.0</div><div class="eta-lbl">km Done</div></div>
-                <div class="eta-it"><div class="eta-val" id="tSpeed">32</div><div class="eta-lbl">km/h</div></div>
-              </div>
-              <div style="display:flex;align-items:center;justify-content:center;gap:.5rem;font-size:.7rem;color:var(--text3)">
-                <span style="background:var(--green-l);color:var(--green);border-radius:20px;padding:.18rem .55rem;font-weight:700;font-size:.65rem">🔒 GPS Verified</span>
-                <span style="background:var(--blue-l);color:var(--blue);border-radius:20px;padding:.18rem .55rem;font-weight:700;font-size:.65rem">📋 Route Logged</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- SHEET 4: COMPLETE -->
-          <div class="bsheet hidden" id="sh4" style="height:370px">
-            <div class="bhandle"></div>
-            <div class="bsc">
-              <div class="stages"><div class="pip done"></div><div class="pip done"></div><div class="pip done"></div><div class="pip done"></div><div class="pip done"></div></div>
-              <div style="text-align:center;padding:.3rem 0 .8rem">
-                <div style="font-size:2.4rem">✅</div>
-                <div style="font-family:'Sora',sans-serif;font-size:1.05rem;font-weight:800;color:var(--text);margin-top:.4rem">Trip Completed!</div>
-                <div style="font-size:.76rem;color:var(--text3);margin-top:.15rem">8.4 km · 24 mins · Raipur</div>
-              </div>
-              <div class="price-card">
-                <div class="prow ptotal"><span class="plbl">Total Fare Paid</span><span class="pval">₹600</span></div>
-              </div>
-              <div class="slbl" style="text-align:center">Rate your driver</div>
-              <div class="rstars" id="starWrap">
-                <span class="rstar lit" onclick="doRate(1)">★</span><span class="rstar lit" onclick="doRate(2)">★</span><span class="rstar lit" onclick="doRate(3)">★</span><span class="rstar lit" onclick="doRate(4)">★</span><span class="rstar lit" onclick="doRate(5)">★</span>
-              </div>
-              <button class="btn-p" onclick="setState('idle')">Book Another Ride</button>
-            </div>
-          </div>
-        </div><!-- /userView -->
-
-        <!-- ══════════ DRIVER VIEW -->
-        <div id="driverView" class="hidden">
-          <div class="gps-bar gps-warn" id="drvGps">📍 &nbsp;Go online to enable GPS tracking</div>
-
-          <!-- Incoming ride overlay -->
-          <div class="inc-alert hidden" id="incAlert">
-            <div class="inc-card">
-              <div class="timer-ring" id="alertTRing">15</div>
-              <div style="text-align:center;margin-bottom:.9rem">
-                <div style="font-family:'Sora',sans-serif;font-size:.95rem;font-weight:800;color:var(--text)">New Ride Request!</div>
-                <div style="font-size:.76rem;color:var(--text3);margin-top:.2rem">Shankar Nagar → VIP Road · 2.4 km</div>
-              </div>
-              <div class="dcard" style="margin-bottom:.9rem">
-                <div style="font-size:1.4rem">👤</div>
-                <div class="dinfo"><div class="dname">Nihal C.</div><div class="dsub">Fare: ₹600 · Personal Driver · 3 hr</div></div>
-                <div style="font-size:.7rem;font-weight:700;color:var(--green);background:var(--green-l);border-radius:20px;padding:.2rem .55rem">★ 4.8</div>
-              </div>
-              <div style="display:flex;gap:.6rem">
-                <button class="btn-r" onclick="declineRide()">✕ &nbsp;Decline</button>
-                <button class="btn-g" onclick="acceptRide()">✓ &nbsp;Accept</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Driver bottom sheet -->
-          <div class="bsheet" id="drvSheet" style="height:auto">
-            <div class="bhandle"></div>
-            <div class="bsc">
-              <!-- IDLE CONTENT -->
-              <div id="drvIdle">
-                <div style="display:flex;flex-direction:column;align-items:center;padding:.8rem 0">
-                  <button class="otoggle offline" id="oBtn" onclick="toggleOnline()">
-                    <span style="font-size:1.8rem" id="oIco">⭕</span>
-                    <span style="font-size:.6rem;font-weight:700;margin-top:.1rem" id="oSubLabel">TAP TO START</span>
-                  </button>
-                  <div class="olbl" id="oLbl">Go Online</div>
-                </div>
-                <div class="ac-panel">
-                  <div class="ac-title">🛡️ Anti-Cheat Security</div>
-                  <div class="ac-row"><div class="ac-lbl">📍 Real Device GPS</div><div class="ac-s ac-ok" id="acGps">ACTIVE</div></div>
-                  <div class="ac-row"><div class="ac-lbl">🎭 Mock Location</div><div class="ac-s ac-ok" id="acMock">NOT DETECTED</div></div>
-                  <div class="ac-row"><div class="ac-lbl">📶 Location Access</div><div class="ac-s ac-ok" id="acPerm">GRANTED</div></div>
-                  <div class="ac-row"><div class="ac-lbl">🔄 Background Track</div><div class="ac-s ac-ok" id="acBg">ENABLED</div></div>
-                </div>
-                <div class="dstats">
-                  <div class="dstat"><div class="dstat-num" style="color:var(--green)">₹1,840</div><div class="dstat-lbl">Earnings</div></div>
-                  <div class="dstat"><div class="dstat-num" style="color:var(--blue)">6</div><div class="dstat-lbl">Trips</div></div>
-                  <div class="dstat"><div class="dstat-num" style="color:var(--amber)">4.9★</div><div class="dstat-lbl">Rating</div></div>
-                </div>
-              </div>
-              <!-- ACTIVE TRIP CONTENT -->
-              <div id="drvActive" class="hidden">
-                <div style="font-family:'Sora',sans-serif;font-size:.8rem;font-weight:700;color:var(--blue);margin-bottom:.7rem">🚗 Active Trip — GPS Locked &amp; Logging</div>
-                <div class="dcard">
-                  <div style="font-size:1.4rem">👤</div>
-                  <div class="dinfo"><div class="dname">Nihal Chandrakar</div><div class="dsub">📍 Shankar Nagar → VIP Road</div></div>
-                  <div class="ibt" onclick="alert('📞 Calling passenger')">📞</div>
-                </div>
-                <div class="ac-panel" style="margin-top:.6rem">
-                  <div class="ac-row"><div class="ac-lbl">📍 GPS Source</div><div class="ac-s ac-ok">REAL GPS ✓</div></div>
-                  <div class="ac-row"><div class="ac-lbl">🔄 Update Freq</div><div class="ac-s ac-ok" id="gpsFreq">Every 3s</div></div>
-                  <div class="ac-row"><div class="ac-lbl">🎭 Mock Detect</div><div class="ac-s ac-ok">CLEAN ✓</div></div>
-                  <div class="ac-row"><div class="ac-lbl">📋 Route Logged</div><div class="ac-s ac-ok" id="routePoints">0 points</div></div>
-                </div>
-                <div class="rlog" id="rlog" style="margin-top:.6rem"><div>Initializing GPS tracker…</div></div>
-                <div style="display:flex;gap:.6rem;margin-top:.7rem">
-                  <button class="btn-o" style="flex:1" onclick="alert('📞 Calling passenger')">📞 Call</button>
-                  <button class="btn-g" onclick="drvEndTrip()">✅ End Trip</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div><!-- /driverView -->
-
-        <!-- BOTTOM NAV -->
-        <div class="bnav" id="bnav">
-          <div class="nit active" onclick="navTap(this,0)"><div class="nico">🏠</div><div class="nlbl" id="nl0">Home</div></div>
-          <div class="nit" onclick="navTap(this,1)"><div class="nico">📅</div><div class="nlbl" id="nl1">Book</div></div>
-          <div class="nit" onclick="navTap(this,2)"><div class="nico">🗂️</div><div class="nlbl" id="nl2">Trips</div></div>
-          <div class="nit" onclick="navTap(this,3)"><div class="nico">👤</div><div class="nlbl" id="nl3">Profile</div></div>
-        </div>
-
-      </div><!-- /phone-inner -->
-    </div><!-- /phone-frame -->
+  <!-- ── SCREEN: HOME ── -->
+  <div class="screen active" id="scHome">
+    <div class="ride-type-row">
+      <button class="ride-chip active" onclick="pickType(this)">🚗 Personal</button>
+      <button class="ride-chip" onclick="pickType(this)">🌙 Night</button>
+      <button class="ride-chip" onclick="pickType(this)">🏥 Medical</button>
+      <button class="ride-chip" onclick="pickType(this)">✈️ Outstation</button>
+    </div>
+    <div class="fare-row">
+      <span class="fare-label">Estimated fare</span>
+      <span class="fare-value" id="fareVal">₹600</span>
+    </div>
+    <div class="fare-row" style="border-bottom: none;">
+      <span class="fare-label">ETA · 2.1 km</span>
+      <span class="fare-value" style="font-size:14px;color:var(--gray-4)">~8 min</span>
+    </div>
+    <button class="btn-primary" onclick="startBooking()">Book Driver</button>
   </div>
 
-  <!-- ════════════════ ADMIN PANEL -->
-  <div class="admin">
-    <div class="adm-hdr">
-      <div class="adm-title">📊 Admin Control Center</div>
-      <div class="adm-sub">DriveBuddy Live Platform · Raipur, Chhattisgarh</div>
+  <!-- ── SCREEN: SEARCHING ── -->
+  <div class="screen" id="scSearch">
+    <div class="searching-center">
+      <div class="spinner"></div>
+      <div class="searching-title">Finding your driver…</div>
+      <div class="searching-sub">Matching with nearby verified drivers</div>
     </div>
+    <button class="btn-primary secondary" onclick="goHome()" style="margin-top: 10px;">Cancel</button>
+  </div>
 
-    <div class="srow">
-      <div class="scard cgreen"><div class="snum" id="aActive">7</div><div class="slb">Active Drivers</div></div>
-      <div class="scard cblue"><div class="snum" id="aRides">3</div><div class="slb">Live Rides</div></div>
-      <div class="scard camber"><div class="snum" id="aAlerts">1</div><div class="slb">Alerts</div></div>
-      <div class="scard"><div class="snum">4.9★</div><div class="slb">Avg Rating</div></div>
-    </div>
-
-    <div class="adm-actions">
-      <button class="adm-action-btn" onclick="simulateFakeGps()">⚠️ Simulate Fake GPS Alert</button>
-      <button class="adm-action-btn" onclick="simulateGpsOff()">📴 Simulate GPS Off</button>
-      <button class="adm-action-btn" onclick="triggerBookingFromAdmin()">🚗 Trigger New Booking</button>
-      <button class="adm-action-btn red" onclick="blockDriver()">🚫 Block Driver D-04</button>
-    </div>
-
-    <div class="adm-card">
-      <div class="adm-card-hdr">
-        <div class="adm-card-title">🗺️ Live Driver Map — Raipur</div>
-        <div class="chip"><div class="ldot"></div>&nbsp;<span id="aOnlineCount">7 online</span></div>
+  <!-- ── SCREEN: ASSIGNED ── -->
+  <div class="screen" id="scAssigned">
+    <div class="driver-row">
+      <div class="driver-avatar">RK</div>
+      <div class="driver-info">
+        <div class="driver-name">Rakesh Kumar</div>
+        <div class="driver-sub">CG 04 AB 1234 · Swift Dzire · White</div>
       </div>
-      <canvas id="adminMapCanvas"></canvas>
+      <div class="driver-rating">⭐ 4.9</div>
+      <button class="call-btn" onclick="alert('📞 Calling Rakesh: 9111-473-929')">📞</button>
     </div>
-
-    <div class="adm-card" id="alertCard">
-      <div class="adm-card-hdr">
-        <div class="adm-card-title">🚨 Alert Log</div>
-        <span class="alrt-badge" id="alertBadge">1</span>
-      </div>
-      <div id="alertList">
-        <div class="ait"><div class="ait-ico">⚠️</div><div><div class="ait-title">Driver D-04: GPS lost signal (45 sec) — Auto-paused</div><div class="ait-time">2 min ago</div></div></div>
-      </div>
+    <div class="eta-row">
+      <div class="eta-item"><div class="eta-val" id="assignEta">8</div><div class="eta-lbl">min away</div></div>
+      <div class="eta-item"><div class="eta-val" id="assignDist">2.1</div><div class="eta-lbl">km away</div></div>
+      <div class="eta-item"><div class="eta-val">🛡️</div><div class="eta-lbl">Verified</div></div>
     </div>
+    <button class="btn-primary secondary" onclick="cancelRide()">Cancel Ride</button>
+  </div>
 
-    <div class="adm-card">
-      <div class="dtbl-hdr"><span style="font-family:'Sora',sans-serif;font-size:.85rem;font-weight:700">👥 Driver Roster</span></div>
-      <div class="dr-row"><div class="drav" style="background:linear-gradient(135deg,#1D4ED8,#7C3AED)">RK</div><div class="drinf"><div class="drname">Rakesh Kumar</div><div class="drsub">📍 Shankar Nagar · 2.4 km</div></div><div class="drst dr-trip" id="rkSt">On Trip</div></div>
-      <div class="dr-row"><div class="drav" style="background:linear-gradient(135deg,#059669,#0D9488)">MS</div><div class="drinf"><div class="drname">Mahesh Singh</div><div class="drsub">📍 Telibandha · Ready</div></div><div class="drst dr-online">Online</div></div>
-      <div class="dr-row"><div class="drav" style="background:linear-gradient(135deg,#D97706,#DC2626)">AP</div><div class="drinf"><div class="drname">Amit Pandey</div><div class="drsub">📍 Pandri · Ready</div></div><div class="drst dr-online">Online</div></div>
-      <div class="dr-row"><div class="drav" style="background:linear-gradient(135deg,#6366F1,#8B5CF6)">SK</div><div class="drinf"><div class="drname">Suresh Kowre</div><div class="drsub">📍 Tatibandh · Ready</div></div><div class="drst dr-online">Online</div></div>
-      <div class="dr-row"><div class="drav" style="background:linear-gradient(135deg,#0D9488,#059669)">RP</div><div class="drinf"><div class="drname">Rajesh Patel</div><div class="drsub">📍 Avanti Vihar · Ready</div></div><div class="drst dr-online">Online</div></div>
-      <div class="dr-row"><div class="drav" style="background:linear-gradient(135deg,#6B7280,#374151)">VT</div><div class="drinf"><div class="drname">Vijay Thakur</div><div class="drsub">📴 Last seen 2h ago</div></div><div class="drst dr-offline">Offline</div></div>
-      <div class="dr-row" id="d04row"><div class="drav" style="background:linear-gradient(135deg,#DC2626,#DB2777)">D4</div><div class="drinf"><div class="drname">Driver D-04</div><div class="drsub" id="d04sub">⚠️ GPS Signal Lost</div></div><div class="drst dr-alert" id="d04st">⚠️ Alert</div></div>
+  <!-- ── SCREEN: TRIP ── -->
+  <div class="screen" id="scTrip">
+    <div class="trip-info-row">
+      <span class="live-badge">LIVE</span>
+      <span class="trip-label">En route to VIP Road</span>
+      <button class="call-btn" onclick="alert('📞 Calling Rakesh: 9111-473-929')">📞</button>
+    </div>
+    <div class="eta-row">
+      <div class="eta-item"><div class="eta-val" id="tripEta">14</div><div class="eta-lbl">min left</div></div>
+      <div class="eta-item"><div class="eta-val" id="tripDone">0.0</div><div class="eta-lbl">km done</div></div>
+      <div class="eta-item"><div class="eta-val" id="tripSpeed">28</div><div class="eta-lbl">km/h</div></div>
+    </div>
+    <div class="driver-row" style="padding-top:0;border-top:1px solid var(--gray-1);margin-top:0;padding-bottom: 0; border-bottom: none; margin-bottom: 0;">
+      <div class="driver-avatar" style="width:36px;height:36px;font-size:12px;">RK</div>
+      <div class="driver-info">
+        <div class="driver-name" style="font-size:14px;">Rakesh Kumar</div>
+        <div class="driver-sub">CG 04 AB 1234</div>
+      </div>
     </div>
   </div>
-</div><!-- /main -->
+
+  <!-- ── SCREEN: COMPLETE ── -->
+  <div class="screen" id="scComplete">
+    <div class="complete-center">
+      <div class="check-icon">✅</div>
+      <div class="complete-title">You've arrived</div>
+      <div class="fare-total">₹600</div>
+      <div class="complete-sub">8.4 km · 24 min · Personal Driver</div>
+    </div>
+    <div class="stars" id="starRow">
+      <span class="star" onclick="rate(1)">★</span>
+      <span class="star" onclick="rate(2)">★</span>
+      <span class="star" onclick="rate(3)">★</span>
+      <span class="star" onclick="rate(4)">★</span>
+      <span class="star" onclick="rate(5)">★</span>
+    </div>
+    <button class="btn-primary" onclick="goHome()">Book Another Ride</button>
+  </div>
+
+  <!-- ── SCREEN: DRIVER IDLE ── -->
+  <div class="screen" id="scDriverIdle">
+    <div style="display:flex;flex-direction:column;align-items:center;padding:16px 0 20px;gap:8px;">
+      <button id="onlineToggle" onclick="toggleDriverOnline()"
+        style="width:80px;height:80px;border-radius:50%;border:none;cursor:pointer;background:var(--gray-1);font-size:24px;transition:all 0.3s;box-shadow:0 4px 16px rgba(0,0,0,0.1);">
+        ⭕
+      </button>
+      <div id="onlineLabel" style="font-size:15px;font-weight:700;color:var(--gray-4);">Go Online</div>
+      <div style="font-size:12px;color:var(--gray-3);font-weight:500;" id="gpsStatusLabel">GPS inactive</div>
+    </div>
+    <div style="border-top:1px solid var(--gray-1);padding-top:14px;display:flex;gap:0;">
+      <div style="flex:1;text-align:center;padding:8px;"><div style="font-size:20px;font-weight:800;color:var(--black);">₹1,840</div><div style="font-size:11px;color:var(--gray-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-top:2px;">Today</div></div>
+      <div style="width:1px;background:var(--gray-2);"></div>
+      <div style="flex:1;text-align:center;padding:8px;"><div style="font-size:20px;font-weight:800;color:var(--black);">6</div><div style="font-size:11px;color:var(--gray-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-top:2px;">Trips</div></div>
+      <div style="width:1px;background:var(--gray-2);"></div>
+      <div style="flex:1;text-align:center;padding:8px;"><div style="font-size:20px;font-weight:800;color:#F59E0B;">4.9★</div><div style="font-size:11px;color:var(--gray-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-top:2px;">Rating</div></div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN: DRIVER TRIP ── -->
+  <div class="screen" id="scDriverTrip">
+    <div class="trip-info-row">
+      <span class="live-badge">ON TRIP</span>
+      <span class="trip-label">Shankar Nagar → VIP Road</span>
+    </div>
+    <div class="driver-row" style="border-bottom:none; margin-bottom:0; padding-bottom:0;">
+      <div style="font-size:32px;">👤</div>
+      <div class="driver-info">
+        <div class="driver-name">Nihal Chandrakar</div>
+        <div class="driver-sub">Personal · ₹600 · 3 hr</div>
+      </div>
+      <button class="call-btn" onclick="alert('📞 Calling passenger')">📞</button>
+    </div>
+    <button class="btn-primary" onclick="driverEndTrip()" style="margin-top:16px;">End Trip</button>
+  </div>
+
+</div>
+
+<!-- INCOMING RIDE OVERLAY (driver) -->
+<div id="incAlert" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(6px);z-index:500;display:none;align-items:flex-end;padding:16px;">
+  <div style="background:white;border-radius:20px;padding:24px 20px 20px;width:100%;animation:slideUp .35s cubic-bezier(0.22,1,0.36,1);">
+    @keyframes slideUp { from { transform: translateY(60px); opacity:0; } to { transform:none; opacity:1; } }
+    <div style="text-align:center;margin-bottom:16px;">
+      <div id="incTimer" style="width:56px;height:56px;border-radius:50%;border:3px solid var(--black);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;margin:0 auto 12px;transition:border-color .3s;">15</div>
+      <div style="font-size:18px;font-weight:800;color:var(--black);">New Ride Request</div>
+      <div style="font-size:13px;color:var(--gray-4);margin-top:4px;font-weight:500;">Shankar Nagar → VIP Road · 2.1 km · ₹600</div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="declineRide()" style="flex:1;padding:14px;border-radius:12px;border:1.5px solid var(--gray-2);background:white;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;color:var(--black);">Decline</button>
+      <button onclick="acceptRide()" style="flex:1;padding:14px;border-radius:12px;border:none;background:var(--black);font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;color:white;">Accept</button>
+    </div>
+  </div>
+</div>
 
 <script>
-// ══════════════════════════════════════════════════ POLYFILL
-if(!CanvasRenderingContext2D.prototype.roundRect){
-  CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
-    this.beginPath();this.moveTo(x+r,y);this.lineTo(x+w-r,y);
-    this.quadraticCurveTo(x+w,y,x+w,y+r);this.lineTo(x+w,y+h-r);
-    this.quadraticCurveTo(x+w,y+h,x+w-r,y+h);this.lineTo(x+r,y+h);
-    this.quadraticCurveTo(x,y+h,x,y+h-r);this.lineTo(x,y+r);
-    this.quadraticCurveTo(x,y,x+r,y);this.closePath();return this;
-  };
-}
+// ── STATE ──
+let appMode = 'user';  // 'user' | 'driver'
+let state = 'home';    // home | searching | assigned | trip | complete | driverIdle | driverTrip
+let tripProg = 0, tripInt = null, assignInt = null;
+let driverOnline = false, incTimerInt = null;
+let rideState = 'idle'; // shared across user/driver
 
-// ══════════════════════════════════════════════════ STATE
-let appMode='user', rideState='idle', driverOnline=false, driverRideState='idle';
-let alertCount=1, rlogCount=0, routePts=0;
-let tripProgress=0, tripInterval=null, alertTimerInt=null, rlogInterval=null;
-let mapZoom=1;
+// ── COORDINATES (Raipur) ──
+const PICKUP = [21.2514, 81.6296];   // Shankar Nagar
+const DROP   = [21.2494, 81.6470];   // VIP Road
+const DRIVER_START = [21.2580, 81.6220]; // driver spawn
 
-const userP={x:.45,y:.53};
-const pickupP={x:.45,y:.53};
-const dropP={x:.73,y:.32};
-let driverP={x:.2,y:.38};
-let driverMoving=false, driverMoveInt=null;
+let map, pickupMarker, dropMarker, driverMarker, routeLine;
+let driverPos = [...DRIVER_START];
 
-// ══════════════════════════════════════════════════ CANVAS
-const mc=document.getElementById('mapCanvas'), mctx=mc.getContext('2d');
-const ac=document.getElementById('adminMapCanvas'), actx=ac.getContext('2d');
-
-const admDrivers=[
-  {x:.28,y:.32,c:'#1D4ED8',l:'RK',s:'trip'},
-  {x:.62,y:.45,c:'#059669',l:'MS',s:'online'},
-  {x:.5,y:.68,c:'#D97706',l:'AP',s:'online'},
-  {x:.76,y:.56,c:'#6366F1',l:'SK',s:'online'},
-  {x:.38,y:.82,c:'#0D9488',l:'RP',s:'online'},
-  {x:.79,y:.25,c:'#374151',l:'VT',s:'offline'},
-  {x:.18,y:.72,c:'#DC2626',l:'D4',s:'alert'},
-];
-
-function resizeAll(){
-  const pi=mc.parentElement;
-  mc.width=pi.clientWidth; mc.height=pi.clientHeight;
-  const ap=ac.parentElement;
-  ac.width=ap.clientWidth; ac.height=210;
-}
-
-function drawMap(ctx,W,H){
-  // Base
-  ctx.fillStyle='#F2EFE9'; ctx.fillRect(0,0,W,H);
-
-  // Water
-  ctx.fillStyle='#B8D8F0';
-  ctx.beginPath(); ctx.ellipse(.82*W,.78*H,.09*W,.06*H,0,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#C9E0F5';
-  ctx.beginPath(); ctx.ellipse(.82*W,.78*H,.06*W,.04*H,0,0,Math.PI*2); ctx.fill();
-
-  // Park
-  ctx.fillStyle='#C5E1C5';
-  ctx.fillRect(.57*W,.04*H,.11*W,.13*H);
-  ctx.fillStyle='#A8D4A8';
-  ctx.beginPath(); ctx.arc(.625*W,.105*H,.04*W,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#8FC88F';
-  ctx.beginPath(); ctx.arc(.6*W,.09*H,.02*W,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(.65*W,.12*H,.018*W,0,Math.PI*2); ctx.fill();
-
-  // City blocks
-  const blocks=[
-    [.04,.04,.17,.18,'#EAE6DE'],[.26,.04,.14,.13,'#EDE9E2'],[.45,.04,.1,.12,'#E7E3DB'],
-    [.73,.04,.24,.18,'#EBE7E0'],[.04,.26,.11,.19,'#E9E5DD'],[.2,.26,.17,.17,'#ECE8E1'],
-    [.44,.22,.11,.13,'#E6E2DB'],[.6,.26,.15,.17,'#EAE6DF'],[.79,.26,.17,.2,'#E7E3DC'],
-    [.04,.5,.14,.19,'#EBE7E0'],[.23,.49,.19,.17,'#E5E1D9'],[.48,.47,.17,.19,'#ECE8E1'],
-    [.71,.5,.14,.17,'#E8E4DD'],[.89,.5,.09,.14,'#EAE6DF'],[.04,.74,.27,.19,'#E6E2DB'],
-    [.37,.72,.21,.22,'#ECE9E2'],[.63,.72,.14,.22,'#E9E5DE'],
-  ];
-  blocks.forEach(([x,y,w,h,c])=>{
-    ctx.fillStyle=c; ctx.fillRect(x*W,y*H,w*W,h*H);
+// ── INIT MAP ──
+function initMap() {
+  map = L.map('map', {
+    center: [21.2514, 81.6350],
+    zoom: 14,
+    zoomControl: true,
+    attributionControl: false,
   });
 
-  // Major roads
-  const majH=[.23,.46,.71], majV=[.2,.43,.67];
-  majH.forEach(y=>{
-    ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,y*H-5,W,11);
-    ctx.strokeStyle='#E0DDD7'; ctx.lineWidth=.6; ctx.setLineDash([10,8]);
-    ctx.beginPath(); ctx.moveTo(0,y*H); ctx.lineTo(W,y*H); ctx.stroke(); ctx.setLineDash([]);
-  });
-  majV.forEach(x=>{
-    ctx.fillStyle='#FFFFFF'; ctx.fillRect(x*W-5,0,11,H);
-    ctx.strokeStyle='#E0DDD7'; ctx.lineWidth=.6; ctx.setLineDash([10,8]);
-    ctx.beginPath(); ctx.moveTo(x*W,0); ctx.lineTo(x*W,H); ctx.stroke(); ctx.setLineDash([]);
-  });
+  // Clean tile style
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19,
+  }).addTo(map);
 
-  // Minor roads
-  ctx.strokeStyle='#E8E4DE'; ctx.lineWidth=3; ctx.setLineDash([]);
-  [[0,.14,1,.14],[0,.36,1,.36],[0,.59,1,.59],[0,.85,1,.85],
-   [.1,0,.1,1],[.31,0,.31,1],[.55,0,.55,1],[.78,0,.78,1]].forEach(([x1,y1,x2,y2])=>{
-    ctx.beginPath(); ctx.moveTo(x1*W,y1*H); ctx.lineTo(x2*W,y2*H); ctx.stroke();
-  });
+  // Pickup marker
+  pickupMarker = L.marker(PICKUP, { icon: pinIcon('#0A0A0A', '📍') }).addTo(map);
 
-  // Road labels
-  ctx.fillStyle='#B0ABA2'; ctx.font=`${Math.max(7,W*.022)}px DM Sans,sans-serif`;
-  ctx.fillText('Shankar Nagar Rd',.04*W,.22*H);
-  ctx.fillText('VIP Road',.04*W,.44*H);
-  ctx.fillText('Pandri Rd',.04*W,.69*H);
-  ctx.fillText('Ring Rd',.22*W,.13*H);
-  ctx.fillText('🌳 Shaheed Smarak Park',.575*W,.16*H);
+  // Drop marker
+  dropMarker = L.marker(DROP, { icon: pinIcon('#276EF1', '📍') }).addTo(map);
+
+  // Driver marker (hidden initially)
+  driverMarker = L.marker(driverPos, { icon: carIcon() });
 }
 
-function drawUserMarker(ctx,x,y,W,H){
-  const px=x*W,py=y*H,t=Date.now();
-  const r=12+4*Math.sin(t/450);
-  ctx.beginPath(); ctx.arc(px,py,r,0,Math.PI*2);
-  ctx.fillStyle='rgba(29,78,216,.12)'; ctx.fill();
-  ctx.beginPath(); ctx.arc(px,py+2,8,0,Math.PI*2);
-  ctx.fillStyle='rgba(0,0,0,.18)'; ctx.fill();
-  ctx.beginPath(); ctx.arc(px,py,9,0,Math.PI*2);
-  ctx.fillStyle='#1D4ED8'; ctx.fill();
-  ctx.strokeStyle='white'; ctx.lineWidth=2.5; ctx.stroke();
-  ctx.beginPath(); ctx.arc(px,py,3.5,0,Math.PI*2);
-  ctx.fillStyle='white'; ctx.fill();
-}
-
-function drawCarMarker(ctx,x,y,W,H,col='#1D4ED8'){
-  const px=x*W,py=y*H;
-  ctx.save(); ctx.translate(px,py);
-  ctx.beginPath(); ctx.ellipse(0,4,9,4.5,0,0,Math.PI*2);
-  ctx.fillStyle='rgba(0,0,0,.22)'; ctx.fill();
-  ctx.beginPath(); ctx.roundRect(-10,-7,20,14,4);
-  ctx.fillStyle=col; ctx.fill();
-  ctx.beginPath(); ctx.roundRect(-7,-5,14,7,2);
-  ctx.fillStyle='rgba(255,255,255,.72)'; ctx.fill();
-  ctx.fillStyle='#222';
-  [[-7,7],[7,7],[-7,-7],[7,-7]].forEach(([wx,wy])=>{
-    ctx.beginPath(); ctx.arc(wx,wy,2.5,0,Math.PI*2); ctx.fill();
+function pinIcon(color, emoji) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      background:${color};color:white;
+      width:32px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+      box-shadow:0 3px 10px rgba(0,0,0,0.25);
+      display:flex;align-items:center;justify-content:center;
+    "><span style="transform:rotate(45deg);font-size:14px;">${emoji}</span></div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
   });
-  ctx.restore();
 }
 
-function drawPin(ctx,x,y,W,H,col,label=''){
-  const px=x*W,py=y*H;
-  ctx.save(); ctx.translate(px,py);
-  ctx.shadowColor='rgba(0,0,0,.25)'; ctx.shadowBlur=8; ctx.shadowOffsetY=3;
-  ctx.beginPath(); ctx.arc(0,-17,10,0,Math.PI*2);
-  ctx.fillStyle=col; ctx.fill();
-  ctx.strokeStyle='white'; ctx.lineWidth=2.5; ctx.stroke();
-  ctx.shadowBlur=0; ctx.shadowOffsetY=0;
-  ctx.beginPath(); ctx.moveTo(-6,-10); ctx.lineTo(0,0); ctx.lineTo(6,-10);
-  ctx.fillStyle=col; ctx.fill();
-  ctx.beginPath(); ctx.arc(0,-17,3.5,0,Math.PI*2);
-  ctx.fillStyle='white'; ctx.fill();
-  if(label){
-    ctx.fillStyle='white'; ctx.font='bold 7px Sora,sans-serif'; ctx.textAlign='center';
-    ctx.fillText(label,0,-15);
+function carIcon() {
+  return L.divIcon({
+    className: '',
+    html: `<div style="background:#0A0A0A;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,0.3);font-size:18px;">🚗</div>`,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+  });
+}
+
+function drawRoute(from, to, color = '#0A0A0A') {
+  if (routeLine) map.removeLayer(routeLine);
+  routeLine = L.polyline([from, to], {
+    color, weight: 4, opacity: 0.75,
+    dashArray: '8, 10',
+  }).addTo(map);
+}
+
+// ── SCREENS ──
+const screens = ['scHome','scSearch','scAssigned','scTrip','scComplete','scDriverIdle','scDriverTrip'];
+function showScreen(id) {
+  screens.forEach(s => document.getElementById(s).classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showTop(mode) {
+  document.getElementById('homeTop').style.display = mode === 'home' ? '' : 'none';
+  document.getElementById('rideTop').style.display = mode === 'ride' ? '' : 'none';
+}
+
+function setEtaFloat(text, show) {
+  const el = document.getElementById('etaFloat');
+  el.textContent = text;
+  el.classList.toggle('visible', show);
+}
+
+// ── USER FLOW ──
+function goHome() {
+  state = 'home';
+  showScreen('scHome');
+  showTop('home');
+  stopAll();
+  if (driverMarker) map.removeLayer(driverMarker);
+  if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+  setEtaFloat('', false);
+  map.flyTo([21.2514, 81.6350], 14, { duration: 1 });
+}
+
+function startBooking() {
+  state = 'searching';
+  showScreen('scSearch');
+  showTop('ride');
+  map.getContainer().classList.add('searching-blur');
+
+  setTimeout(() => {
+    map.getContainer().classList.remove('searching-blur');
+    assignDriver();
+  }, 3500);
+}
+
+function assignDriver() {
+  state = 'assigned';
+  showScreen('scAssigned');
+  driverPos = [...DRIVER_START];
+  driverMarker.setLatLng(driverPos).addTo(map);
+  drawRoute(DRIVER_START, PICKUP, '#0A0A0A');
+  map.flyTo([
+    (DRIVER_START[0] + PICKUP[0]) / 2,
+    (DRIVER_START[1] + PICKUP[1]) / 2
+  ], 14, { duration: 1 });
+
+  // Animate driver → pickup
+  animateDriver(DRIVER_START, PICKUP, 8000, () => {
+    // Arrived at pickup — start trip
+    state = 'trip';
+    showScreen('scTrip');
+    drawRoute(PICKUP, DROP, '#276EF1');
+    map.flyTo([(PICKUP[0]+DROP[0])/2, (PICKUP[1]+DROP[1])/2], 14, { duration: 1 });
+    startTrip();
+  });
+
+  // Animate ETA countdown
+  let eta = 8, dist = 2.1;
+  assignInt = setInterval(() => {
+    eta = Math.max(1, eta - 1);
+    dist = Math.max(0, (dist - 0.27)).toFixed(1);
+    document.getElementById('assignEta').textContent = eta;
+    document.getElementById('assignDist').textContent = dist;
+    setEtaFloat(`Driver ${eta} min away`, true);
+    if (eta <= 1) clearInterval(assignInt);
+  }, 1000);
+}
+
+let animFrame = null;
+function animateDriver(from, to, duration, onDone) {
+  const start = Date.now();
+  function step() {
+    const t = Math.min(1, (Date.now() - start) / duration);
+    const lat = from[0] + (to[0] - from[0]) * ease(t);
+    const lng = from[1] + (to[1] - from[1]) * ease(t);
+    driverPos = [lat, lng];
+    driverMarker.setLatLng(driverPos);
+    if (t < 1) { animFrame = requestAnimationFrame(step); }
+    else { if (onDone) onDone(); }
   }
-  ctx.restore();
+  requestAnimationFrame(step);
 }
+function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
 
-function drawRoute(ctx,x1,y1,x2,y2,W,H,col,progress=1){
-  const p1x=x1*W,p1y=y1*H,p2x=x2*W,p2y=y2*H;
-  const ex=p1x+(p2x-p1x)*progress, ey=p1y+(p2y-p1y)*progress;
-  ctx.beginPath(); ctx.moveTo(p1x,p1y); ctx.lineTo(ex,ey);
-  ctx.strokeStyle=col+'44'; ctx.lineWidth=6; ctx.lineCap='round'; ctx.setLineDash([]); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(p1x,p1y); ctx.lineTo(ex,ey);
-  ctx.strokeStyle=col; ctx.lineWidth=3;
-  ctx.setLineDash([9,7]); ctx.lineDashOffset=-(Date.now()/100%16);
-  ctx.stroke(); ctx.setLineDash([]);
-}
+function startTrip() {
+  tripProg = 0;
+  setEtaFloat('', false);
+  tripInt = setInterval(() => {
+    tripProg = Math.min(1, tripProg + 0.012);
+    const lat = PICKUP[0] + (DROP[0] - PICKUP[0]) * tripProg;
+    const lng = PICKUP[1] + (DROP[1] - PICKUP[1]) * tripProg;
+    driverMarker.setLatLng([lat, lng]);
 
-function drawLabel(ctx,x,y,W,H,txt){
-  const px=x*W,py=y*H;
-  ctx.save(); ctx.font='bold 11px DM Sans,sans-serif';
-  const tw=ctx.measureText(txt).width+16;
-  ctx.fillStyle='rgba(29,78,216,.92)';
-  ctx.roundRect(px-tw/2,py-28,tw,22,5); ctx.fill();
-  ctx.fillStyle='white'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText(txt,px,py-17); ctx.restore();
-}
+    const rem = Math.max(1, Math.ceil((1-tripProg)*14));
+    const done = (tripProg * 8.4).toFixed(1);
+    const spd = Math.floor(22 + Math.random()*16);
+    document.getElementById('tripEta').textContent = rem;
+    document.getElementById('tripDone').textContent = done;
+    document.getElementById('tripSpeed').textContent = spd;
 
-function renderMap(){
-  const W=mc.width,H=mc.height;
-  mctx.clearRect(0,0,W,H);
-  drawMap(mctx,W,H);
-
-  if(rideState==='idle'){
-    drawUserMarker(mctx,userP.x,userP.y,W,H);
-  } else if(rideState==='searching'){
-    drawUserMarker(mctx,userP.x,userP.y,W,H);
-  } else if(rideState==='assigned'){
-    drawRoute(mctx,driverP.x,driverP.y,pickupP.x,pickupP.y,W,H,'#1D4ED8',1);
-    drawPin(mctx,pickupP.x,pickupP.y,W,H,'#DC2626');
-    drawUserMarker(mctx,userP.x,userP.y,W,H);
-    drawCarMarker(mctx,driverP.x,driverP.y,W,H);
-    const d=Math.hypot(driverP.x-pickupP.x,driverP.y-pickupP.y);
-    const km=(d*12).toFixed(1), eta=Math.max(1,Math.ceil(d*80));
-    drawLabel(mctx,(driverP.x+pickupP.x)/2,(driverP.y+pickupP.y)/2,W,H,`${km} km · ${eta} min ETA`);
-    document.getElementById('etaMinV').textContent=eta;
-    document.getElementById('etaDistV').textContent=km;
-    document.getElementById('etaMin').textContent=`${eta}`;
-  } else if(rideState==='trip'){
-    const tx=pickupP.x+(dropP.x-pickupP.x)*tripProgress;
-    const ty=pickupP.y+(dropP.y-pickupP.y)*tripProgress;
-    drawRoute(mctx,pickupP.x,pickupP.y,dropP.x,dropP.y,W,H,'#059669',tripProgress);
-    drawPin(mctx,pickupP.x,pickupP.y,W,H,'#6B7280');
-    drawPin(mctx,dropP.x,dropP.y,W,H,'#059669');
-    drawCarMarker(mctx,tx,ty,W,H,'#059669');
-    const rem=1-tripProgress;
-    const remKm=(rem*8.4).toFixed(1),remEta=Math.max(1,Math.ceil(rem*24));
-    if(tripProgress>.05) drawLabel(mctx,tx,ty-.07,W,H,`${remKm} km left · ${remEta} min`);
-    document.getElementById('tEta').textContent=remEta;
-    document.getElementById('tDist').textContent=((tripProgress*8.4)).toFixed(1);
-    document.getElementById('tSpeed').textContent=(22+Math.random()*18|0);
-  } else if(rideState==='complete'){
-    drawRoute(mctx,pickupP.x,pickupP.y,dropP.x,dropP.y,W,H,'#059669',1);
-    drawPin(mctx,pickupP.x,pickupP.y,W,H,'#6B7280');
-    drawPin(mctx,dropP.x,dropP.y,W,H,'#059669');
-    drawCarMarker(mctx,dropP.x,dropP.y,W,H,'#059669');
-  }
-
-  // Driver view overlay
-  if(appMode==='driver' && driverOnline){
-    drawCarMarker(mctx,driverP.x,driverP.y,W,H,'#059669');
-    if(driverRideState==='accepted'||driverRideState==='trip'){
-      drawPin(mctx,pickupP.x,pickupP.y,W,H,'#DC2626');
+    if (tripProg >= 1) {
+      clearInterval(tripInt);
+      setTimeout(() => {
+        state = 'complete';
+        showScreen('scComplete');
+        if (routeLine) map.removeLayer(routeLine);
+        map.flyTo(DROP, 15, { duration: 1 });
+        setEtaFloat('', false);
+      }, 600);
     }
-  }
-}
-
-function renderAdminMap(){
-  const W=ac.width,H=ac.height;
-  if(!W||!H) return;
-  actx.clearRect(0,0,W,H);
-  drawMap(actx,W,H);
-  admDrivers.forEach(d=>{
-    const dx=d.x+.008*Math.sin(Date.now()/2200+d.x*10);
-    const dy=d.y+.008*Math.cos(Date.now()/1700+d.y*10);
-    const col=d.s==='offline'?'#9CA3AF':d.s==='alert'?'#DC2626':d.c;
-    drawCarMarker(actx,dx,dy,W,H,col);
-    actx.fillStyle='rgba(0,0,0,.65)'; actx.font='7px Sora,sans-serif'; actx.textAlign='center';
-    actx.fillText(d.l,dx*W,dy*H+18);
-  });
-}
-
-function loop(){renderMap();renderAdminMap();requestAnimationFrame(loop);}
-
-// ══════════════════════════════════════════════════ STATE MACHINE
-function showSheet(id){
-  ['sh0','sh1','sh2','sh3','sh4'].forEach(s=>document.getElementById(s).classList.add('hidden'));
-  if(id) document.getElementById(id).classList.remove('hidden');
-}
-
-function setState(s){
-  rideState=s;
-  switch(s){
-    case 'idle':
-      showSheet('sh0');
-      document.getElementById('searchFloat').classList.remove('hidden');
-      document.getElementById('mapCtrl').classList.remove('hidden');
-      stopDriverMove(); stopTripInterval(); stopRlog();
-      driverP={x:.2,y:.38}; tripProgress=0;
-      break;
-    case 'searching':
-      showSheet('sh1');
-      document.getElementById('searchFloat').classList.add('hidden');
-      document.getElementById('mapCtrl').classList.add('hidden');
-      setTimeout(()=>{ if(rideState==='searching') setState('assigned'); }, 4000);
-      break;
-    case 'assigned':
-      showSheet('sh2');
-      document.getElementById('rkSt').textContent='On Trip';
-      document.getElementById('rkSt').className='drst dr-trip';
-      startDriverMove(pickupP, ()=>{ setState('trip'); });
-      addAlert('🚗 Booking confirmed — Driver RK dispatched to Shankar Nagar','just now');
-      // If driver view is open and driver is online, show incoming
-      if(driverOnline && driverRideState==='idle') setTimeout(()=>showIncoming(), 800);
-      break;
-    case 'trip':
-      showSheet('sh3');
-      tripProgress=0;
-      startTripInterval();
-      startRlog();
-      break;
-    case 'complete':
-      showSheet('sh4');
-      stopTripInterval(); stopRlog();
-      addAlert('✅ Trip complete — RK · Nihal · 8.4 km · ₹600','just now');
-      document.getElementById('rkSt').textContent='Online';
-      document.getElementById('rkSt').className='drst dr-online';
-      break;
-  }
-}
-
-function startDriverMove(target, onArrival){
-  stopDriverMove();
-  driverMoving=true;
-  driverMoveInt=setInterval(()=>{
-    const dx=target.x-driverP.x, dy=target.y-driverP.y;
-    const d=Math.hypot(dx,dy);
-    if(d<.012){ driverP={...target}; stopDriverMove(); if(onArrival) onArrival(); }
-    else{ const sp=.005; driverP.x+=dx/d*sp; driverP.y+=dy/d*sp; }
-  },100);
-}
-function stopDriverMove(){ if(driverMoveInt){ clearInterval(driverMoveInt); driverMoveInt=null; } driverMoving=false; }
-
-function startTripInterval(){
-  stopTripInterval();
-  tripInterval=setInterval(()=>{
-    tripProgress=Math.min(1, tripProgress+.015);
-    if(tripProgress>=1){ stopTripInterval(); setTimeout(()=>setState('complete'),800); }
   }, 200);
 }
-function stopTripInterval(){ if(tripInterval){ clearInterval(tripInterval); tripInterval=null; } }
 
-const GPS_COORDS=[
-  ['21.2512','81.6292'],['21.2519','81.6311'],['21.2533','81.6329'],
-  ['21.2548','81.6348'],['21.2561','81.6366'],['21.2577','81.6385'],
-  ['21.2591','81.6401'],['21.2605','81.6418'],['21.2618','81.6432'],
-];
-function startRlog(){
-  stopRlog(); rlogCount=0; routePts=0;
-  const log=document.getElementById('rlog');
-  log.innerHTML='<div>GPS tracker initialized…</div>';
-  rlogInterval=setInterval(()=>{
-    const c=GPS_COORDS[rlogCount%GPS_COORDS.length];
-    const now=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    const div=document.createElement('div');
-    div.textContent=`[${now}] ${c[0]}°N, ${c[1]}°E · Verified ✓`;
-    log.appendChild(div); log.scrollTop=log.scrollHeight;
-    rlogCount++; routePts++;
-    document.getElementById('routePoints').textContent=`${routePts} pts`;
-    document.getElementById('gpsFreq').textContent=`Every 3s`;
-  }, 2500);
+function cancelRide() {
+  goHome();
 }
-function stopRlog(){ if(rlogInterval){ clearInterval(rlogInterval); rlogInterval=null; } }
 
-// ══════════════════════════════════════════════════ USER ACTIONS
-function startBooking(){ setState('searching'); }
-function pickSrv(el){
-  document.querySelectorAll('.stile').forEach(t=>{ t.className='stile stile-inactive'; });
-  el.className='stile stile-active';
+function stopAll() {
+  clearInterval(tripInt); clearInterval(assignInt); clearInterval(incTimerInt);
+  if (animFrame) cancelAnimationFrame(animFrame);
 }
-function doZoom(f){ mapZoom=Math.max(.5,Math.min(3,mapZoom*f)); }
-function centerMap(){}
-function doRate(n){ document.querySelectorAll('.rstar').forEach((s,i)=>s.classList.toggle('lit',i<n)); }
-function navTap(el,i){
-  document.querySelectorAll('.nit').forEach(n=>n.classList.remove('active'));
+
+function pickType(el) {
+  document.querySelectorAll('.ride-chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
-  if(i===1 && appMode==='user') startBooking();
+  const fares = { '🚗 Personal': '₹600', '🌙 Night': '₹500', '🏥 Medical': 'Priority', '✈️ Outstation': '₹1,200+' };
+  document.getElementById('fareVal').textContent = fares[el.textContent] || '₹600';
 }
 
-// ══════════════════════════════════════════════════ DRIVER ACTIONS
-function toggleOnline(){
-  driverOnline=!driverOnline;
-  const btn=document.getElementById('oBtn');
-  const lbl=document.getElementById('oLbl');
-  const ico=document.getElementById('oIco');
-  const sub=document.getElementById('oSubLabel');
-  const gps=document.getElementById('drvGps');
-  if(driverOnline){
-    btn.className='otoggle online'; ico.textContent='🟢'; lbl.textContent='Online — Ready'; sub.textContent='TAP TO PAUSE';
-    gps.className='gps-bar gps-ok'; gps.textContent='📍  GPS Active · Real location · Tracking ON';
-    if(rideState==='assigned'||rideState==='searching') setTimeout(showIncoming,1500);
+function rate(n) {
+  document.querySelectorAll('.star').forEach((s, i) => s.classList.toggle('lit', i < n));
+}
+
+// ── DRIVER FLOW ──
+function toggleDriverOnline() {
+  driverOnline = !driverOnline;
+  const btn = document.getElementById('onlineToggle');
+  const lbl = document.getElementById('onlineLabel');
+  const gps = document.getElementById('gpsStatusLabel');
+  if (driverOnline) {
+    btn.style.background = '#0A0A0A'; btn.textContent = '🟢';
+    lbl.style.color = '#0A0A0A'; lbl.textContent = 'Online';
+    gps.textContent = 'GPS active · tracking ON';
+    driverMarker.setLatLng(driverPos).addTo(map);
+    map.flyTo(driverPos, 14, { duration: 1 });
+    // Show incoming ride after 3s
+    setTimeout(showIncomingRide, 3000);
   } else {
-    btn.className='otoggle offline'; ico.textContent='⭕'; lbl.textContent='Go Online'; sub.textContent='TAP TO START';
-    gps.className='gps-bar gps-warn'; gps.textContent='📍  GPS Paused — Go online to enable tracking';
+    btn.style.background = 'var(--gray-1)'; btn.textContent = '⭕';
+    lbl.style.color = 'var(--gray-4)'; lbl.textContent = 'Go Online';
+    gps.textContent = 'GPS inactive';
+    if (driverMarker) map.removeLayer(driverMarker);
   }
 }
 
-function showIncoming(){
-  if(!driverOnline || driverRideState!=='idle') return;
-  document.getElementById('incAlert').classList.remove('hidden');
-  let count=15;
-  document.getElementById('alertTRing').textContent=count;
-  document.getElementById('alertTRing').className='timer-ring';
-  if(alertTimerInt) clearInterval(alertTimerInt);
-  alertTimerInt=setInterval(()=>{
+function showIncomingRide() {
+  if (!driverOnline) return;
+  const overlay = document.getElementById('incAlert');
+  overlay.style.display = 'flex';
+  let count = 15;
+  document.getElementById('incTimer').textContent = count;
+  incTimerInt = setInterval(() => {
     count--;
-    document.getElementById('alertTRing').textContent=count;
-    if(count<=5) document.getElementById('alertTRing').className='timer-ring urgent';
-    if(count<=0){ clearInterval(alertTimerInt); declineRide(); }
-  },1000);
+    document.getElementById('incTimer').textContent = count;
+    if (count <= 5) document.getElementById('incTimer').style.borderColor = '#DC2626';
+    if (count <= 0) { clearInterval(incTimerInt); declineRide(); }
+  }, 1000);
 }
 
-function acceptRide(){
-  clearInterval(alertTimerInt);
-  document.getElementById('incAlert').classList.add('hidden');
-  document.getElementById('drvIdle').classList.add('hidden');
-  document.getElementById('drvActive').classList.remove('hidden');
-  driverRideState='accepted';
-  if(rideState==='searching') setState('assigned');
+function acceptRide() {
+  clearInterval(incTimerInt);
+  document.getElementById('incAlert').style.display = 'none';
+  document.getElementById('incTimer').style.borderColor = 'var(--black)';
+  state = 'driverTrip';
+  showScreen('scDriverTrip');
+  drawRoute(driverPos, DROP, '#276EF1');
+  map.flyTo([(driverPos[0]+DROP[0])/2, (driverPos[1]+DROP[1])/2], 13, { duration: 1 });
+  animateDriver(driverPos, DROP, 14000, () => {});
 }
 
-function declineRide(){
-  clearInterval(alertTimerInt);
-  document.getElementById('incAlert').classList.add('hidden');
+function declineRide() {
+  clearInterval(incTimerInt);
+  document.getElementById('incAlert').style.display = 'none';
+  document.getElementById('incTimer').style.borderColor = 'var(--black)';
 }
 
-function drvEndTrip(){
-  document.getElementById('drvIdle').classList.remove('hidden');
-  document.getElementById('drvActive').classList.add('hidden');
-  driverRideState='idle'; stopRlog();
-  if(rideState!=='complete') setState('complete');
+function driverEndTrip() {
+  stopAll();
+  if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+  state = 'driverIdle';
+  showScreen('scDriverIdle');
+  // Reset online button
+  const btn = document.getElementById('onlineToggle');
+  btn.style.background = '#0A0A0A'; btn.textContent = '🟢';
 }
 
-// ══════════════════════════════════════════════════ VIEW SWITCH
-function setView(mode,btn){
-  appMode=mode;
-  document.querySelectorAll('.mtab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('userView').classList.toggle('hidden', mode==='driver');
-  document.getElementById('driverView').classList.toggle('hidden', mode==='user');
-  const navLabels=[
-    mode==='user'?['Home','Book','Trips','Profile']:['Map','Trips','Earn','Profile'],
-    mode==='user'?['🏠','📅','🗂️','👤']:['🗺️','📋','💰','👤'],
-  ];
-  for(let i=0;i<4;i++){
-    document.getElementById(`nl${i}`).textContent=navLabels[0][i];
-    document.querySelector(`.bnav .nit:nth-child(${i+1}) .nico`).textContent=navLabels[1][i];
+// ── MODE SWITCH ──
+function setDemo(mode) {
+  appMode = mode;
+  document.querySelectorAll('.msw-btn').forEach((b, i) => {
+    b.classList.toggle('active', (i===0 && mode==='user') || (i===1 && mode==='driver'));
+  });
+  stopAll();
+  if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+  if (driverMarker) map.removeLayer(driverMarker);
+  setEtaFloat('', false);
+
+  if (mode === 'user') {
+    showTop('home'); showScreen('scHome');
+    map.flyTo([21.2514, 81.6350], 14, { duration: 1 });
+    driverOnline = false;
+  } else {
+    showTop('');
+    document.getElementById('homeTop').style.display = 'none';
+    document.getElementById('rideTop').style.display = 'none';
+    showScreen('scDriverIdle');
+    driverOnline = false;
+    const btn = document.getElementById('onlineToggle');
+    btn.style.background = 'var(--gray-1)'; btn.textContent = '⭕';
+    document.getElementById('onlineLabel').style.color = 'var(--gray-4)';
+    document.getElementById('onlineLabel').textContent = 'Go Online';
+    document.getElementById('gpsStatusLabel').textContent = 'GPS inactive';
+    map.flyTo([21.2530, 81.6250], 13, { duration: 1 });
   }
 }
 
-// ══════════════════════════════════════════════════ ADMIN ACTIONS
-function addAlert(title,time,icon='🚨'){
-  alertCount++;
-  document.getElementById('alertBadge').textContent=alertCount;
-  document.getElementById('aAlerts').textContent=alertCount;
-  const list=document.getElementById('alertList');
-  const div=document.createElement('div'); div.className='ait';
-  div.innerHTML=`<div class="ait-ico">${icon}</div><div><div class="ait-title">${title}</div><div class="ait-time">${time}</div></div>`;
-  list.insertBefore(div,list.firstChild);
-  while(list.children.length>8) list.removeChild(list.lastChild);
+// ── CLOCK ──
+function tick() {
+  document.getElementById('clockEl').textContent =
+    new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+}
+tick(); setInterval(tick, 1000);
+
+function focusInput(which) {
+  document.getElementById(which === 'pickup' ? 'pickupInput' : 'dropInput').focus();
 }
 
-function simulateFakeGps(){
-  addAlert('🎭 ANTI-CHEAT: Fake GPS detected — Driver D-04 blocked','just now','🚨');
-  document.getElementById('d04st').textContent='🚫 Blocked';
-  document.getElementById('d04st').className='drst dr-alert';
-  document.getElementById('d04sub').textContent='🚫 Fake GPS detected — suspended';
-  // Change admin driver color
-  admDrivers.find(d=>d.l==='D4').s='alert';
-}
-
-function simulateGpsOff(){
-  addAlert('📴 Driver RK: GPS signal OFF — Ride paused, alert sent','just now','⚠️');
-  // Flash GPS bar in user view
-  const g=document.getElementById('userGps');
-  const orig=g.className+' '+g.textContent;
-  g.className='gps-bar gps-err'; g.textContent='⚠️  Driver GPS lost — Waiting to reconnect…';
-  setTimeout(()=>{ g.className='gps-bar gps-ok'; g.textContent='📍  GPS Reacquired — Tracking resumed'; },4000);
-}
-
-function triggerBookingFromAdmin(){
-  addAlert('📥 New booking — Tatibandh, Raipur — Assigned to SK','just now','🚗');
-  document.getElementById('aRides').textContent=parseInt(document.getElementById('aRides').textContent)+1;
-}
-
-function blockDriver(){
-  addAlert('🚫 Driver D-04 blocked by admin — Account suspended','just now','🚫');
-  document.getElementById('d04st').textContent='🚫 Suspended';
-  document.getElementById('d04sub').textContent='⛔ Account suspended by admin';
-}
-
-// ══════════════════════════════════════════════════ AUTO DEMO
-function autoDemo(){
-  let step=0;
-  const steps=[
-    ()=>{ if(rideState!=='idle') setState('idle'); },
-    ()=>setState('searching'),
-    ()=>setState('assigned'),
-    ()=>setState('trip'),
-    ()=>setState('complete'),
-  ];
-  const delays=[300,3500,4500,14000,6000];
-  function runStep(){
-    if(step>=steps.length) return;
-    setTimeout(()=>{ steps[step](); step++; runStep(); }, delays[step]||1000);
-  }
-  setState('idle');
-  setTimeout(runStep,400);
-}
-
-// ══════════════════════════════════════════════════ CLOCK
-function updateClock(){
-  document.getElementById('sbarTime').textContent=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-}
-setInterval(updateClock,1000); updateClock();
-
-// ══════════════════════════════════════════════════ INIT
-window.addEventListener('load',()=>{
-  resizeAll();
-  window.addEventListener('resize',resizeAll);
-  loop();
-  setState('idle');
-  // Periodic admin stat updates
-  setInterval(()=>{
-    document.getElementById('aRides').textContent=2+Math.floor(Math.random()*4);
-    document.getElementById('aActive').textContent=6+Math.floor(Math.random()*3);
-  }, 12000);
+// ── BOOT ──
+window.addEventListener('load', () => {
+  initMap();
+  goHome();
 });
 </script>
 </body>
