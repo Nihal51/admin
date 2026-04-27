@@ -3,1275 +3,1071 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>DriveBuddy — Driver App</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Figtree:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-<script>
-  firebase.initializeApp({
-    apiKey:            "AIzaSyDjkG40JGorJDq0XN25pg_S08L8GLbw3EU",
-    authDomain:        "drive-buddy-b967d.firebaseapp.com",
-    databaseURL:       "https://drive-buddy-b967d-default-rtdb.firebaseio.com",
-    projectId:         "drive-buddy-b967d",
-    storageBucket:     "drive-buddy-b967d.firebasestorage.app",
-    messagingSenderId: "82991557282",
-    appId:             "1:82991557282:web:851c141add9dcc6d1705fb"
-  });
-  const db      = firebase.database();
-  const storage = firebase.storage();
-</script>
-
+<title>DriveBuddy — Live Ride Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
 <style>
-/* ════════════════════════════════════
-   RESET & BASE
-════════════════════════════════════ */
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{font-size:16px;height:100%;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-body{
-  font-family:'Figtree',sans-serif;
-  background:#0A0910;
-  color:#F0E8D6;
-  min-height:100%;
-  min-height:100svh;
-  overflow-x:hidden;
-  line-height:1.5;
-}
-input,select,textarea,button{font-family:inherit;outline:none}
-a{color:inherit;text-decoration:none}
-img{max-width:100%;display:block}
-
-/* ════════════════════════════════════
-   CSS VARS
-════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:#EEF2F7;overflow-x:hidden}
 :root{
-  --bg:#0A0910;
-  --surface:#141220;
-  --surface2:#1C1A2A;
-  --surface3:#252338;
-  --border:rgba(255,255,255,0.07);
-  --border2:rgba(255,255,255,0.12);
-  --gold:#C9993A;
-  --gold2:#E5B355;
-  --gold-dim:rgba(201,153,58,0.12);
-  --gold-rim:rgba(201,153,58,0.28);
-  --cream:#F0E8D6;
-  --cream60:rgba(240,232,214,0.6);
-  --cream30:rgba(240,232,214,0.3);
-  --cream15:rgba(240,232,214,0.12);
-  --green:#22C55E;
-  --green-dim:rgba(34,197,94,0.12);
-  --green-rim:rgba(34,197,94,0.3);
-  --red:#EF4444;
-  --red-dim:rgba(239,68,68,0.12);
-  --red-rim:rgba(239,68,68,0.3);
-  --blue:#60A5FA;
-  --serif:'Cormorant Garamond',serif;
-  --mono:'DM Mono',monospace;
+  --blue:#1D4ED8;--blue-l:#EFF6FF;--blue-m:#DBEAFE;
+  --green:#059669;--green-l:#ECFDF5;
+  --amber:#D97706;--amber-l:#FFFBEB;
+  --red:#DC2626;--red-l:#FEF2F2;
+  --text:#0F172A;--text2:#475569;--text3:#94A3B8;
+  --border:#E2E8F0;--bg:#FFFFFF;--surface:#F8FAFC;--surface2:#F1F5F9;
+  --gold:#C9993A;--radius:14px;
   --ease:cubic-bezier(0.22,1,0.36,1);
 }
 
-/* ════════════════════════════════════
-   SCREENS — only one visible at a time
-════════════════════════════════════ */
-.screen{display:none;min-height:100svh;flex-direction:column}
-.screen.active{display:flex}
+/* ═══════════════════════════════════════ TOP BAR */
+.top-bar{
+  position:sticky;top:0;z-index:200;
+  background:var(--text);
+  padding:.55rem 1.25rem;
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+}
+.brand{font-family:'Sora',sans-serif;font-size:.95rem;font-weight:800;color:#fff;display:flex;align-items:center;gap:.4rem;white-space:nowrap}
+.brand span{color:var(--gold)}
+.mode-tabs{display:flex;gap:.2rem;background:rgba(255,255,255,.1);border-radius:8px;padding:.2rem}
+.mtab{padding:.3rem .8rem;border-radius:6px;border:none;background:transparent;color:rgba(255,255,255,.55);font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.mtab.active{background:white;color:var(--text)}
+.sys-badge{font-size:.62rem;color:var(--green);background:rgba(5,150,105,.15);border:1px solid rgba(5,150,105,.3);border-radius:20px;padding:.22rem .65rem;display:flex;align-items:center;gap:.3rem;white-space:nowrap}
+.ldot{width:5px;height:5px;background:var(--green);border-radius:50%;animation:ldpulse 1.5s infinite}
+@keyframes ldpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.6)}}
+.demo-btn{padding:.35rem .9rem;background:var(--gold);color:var(--text);border:none;border-radius:6px;font-family:'Sora',sans-serif;font-size:.7rem;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap}
+.demo-btn:hover{background:#E5B355}
 
-/* ════════════════════════════════════
-   LOADING SCREEN
-════════════════════════════════════ */
-#s-loading{
-  align-items:center;justify-content:center;
-  background:var(--bg);
-}
-.loading-logo{
-  display:flex;flex-direction:column;align-items:center;gap:1rem;
-  animation:fadeUp 0.6s var(--ease) both;
-}
-.loading-icon{
-  width:72px;height:72px;
-  background:var(--gold-dim);border:1px solid var(--gold-rim);
-  border-radius:22px;display:flex;align-items:center;justify-content:center;
-  font-size:2rem;
-}
-.loading-wordmark{font-family:var(--serif);font-size:2rem;font-weight:700;color:var(--cream)}
-.loading-wordmark span{color:var(--gold)}
-.loading-sub{font-family:var(--mono);font-size:0.65rem;color:var(--cream30);letter-spacing:0.18em;text-transform:uppercase;margin-top:0.2rem}
-.loading-spinner{
-  width:36px;height:36px;border-radius:50%;
-  border:2px solid var(--gold-rim);
-  border-top-color:var(--gold);
-  animation:spin 0.9s linear infinite;
-  margin-top:2rem;
-}
+/* ═══════════════════════════════════════ LAYOUT */
+.main{display:flex;gap:1.2rem;padding:1.2rem;max-width:1160px;margin:0 auto;align-items:flex-start;flex-wrap:wrap;justify-content:center}
 
-/* ════════════════════════════════════
-   WELCOME SCREEN
-════════════════════════════════════ */
-#s-welcome{
-  background:var(--bg);
-  position:relative;overflow:hidden;
+/* ═══════════════════════════════════════ PHONE */
+.phone-wrap{flex-shrink:0}
+.phone-frame{
+  width:370px;height:710px;
+  background:white;border-radius:42px;overflow:hidden;
+  position:relative;
+  box-shadow:0 40px 80px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.07),inset 0 1px 0 rgba(255,255,255,.4);
+  border:8px solid #1A1A2E;
 }
-.welcome-glow{
-  position:absolute;top:-20%;left:50%;transform:translateX(-50%);
-  width:500px;height:500px;
-  background:radial-gradient(circle,rgba(201,153,58,0.07) 0%,transparent 65%);
-  pointer-events:none;
+.notch{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:110px;height:26px;background:#1A1A2E;border-radius:0 0 16px 16px;
+  z-index:99;display:flex;align-items:center;justify-content:center;
 }
-.welcome-inner{
-  flex:1;display:flex;flex-direction:column;
-  padding:3rem 1.6rem 2rem;position:relative;z-index:1;
-}
-.welcome-badge{
-  display:inline-flex;align-items:center;gap:0.5rem;
-  background:var(--gold-dim);border:1px solid var(--gold-rim);
-  border-radius:50px;padding:0.35rem 0.9rem;
-  font-family:var(--mono);font-size:0.62rem;color:var(--gold);
-  letter-spacing:0.1em;text-transform:uppercase;
-  margin-bottom:2.5rem;align-self:flex-start;
-}
-.welcome-title{
-  font-family:var(--serif);font-size:2.8rem;font-weight:700;
-  line-height:1.05;letter-spacing:-0.02em;color:var(--cream);
-  margin-bottom:0.8rem;
-}
-.welcome-title em{color:var(--gold);font-style:italic}
-.welcome-desc{
-  font-size:0.95rem;color:var(--cream60);line-height:1.7;
-  font-weight:300;margin-bottom:2.5rem;max-width:340px;
-}
-.welcome-steps{
-  display:flex;flex-direction:column;gap:0.7rem;margin-bottom:3rem;
-}
-.welcome-step{
-  display:flex;align-items:center;gap:0.75rem;
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:12px;padding:0.8rem 1rem;
-}
-.ws-num{
-  width:26px;height:26px;border-radius:8px;
-  background:var(--gold-dim);border:1px solid var(--gold-rim);
-  display:flex;align-items:center;justify-content:center;
-  font-family:var(--mono);font-size:0.65rem;color:var(--gold);
-  flex-shrink:0;
-}
-.ws-text{font-size:0.85rem;color:var(--cream60);font-weight:400}
-.ws-text strong{color:var(--cream);font-weight:600}
-.welcome-cta{
-  width:100%;padding:1.1rem;border-radius:14px;
-  background:var(--gold);color:#08070A;border:none;
-  font-size:1rem;font-weight:700;cursor:pointer;
-  transition:background 0.2s,transform 0.2s;
-  display:flex;align-items:center;justify-content:center;gap:0.5rem;
-}
-.welcome-cta:hover,.welcome-cta:active{background:var(--gold2);transform:scale(0.99)}
+.notch::before{content:'';width:36px;height:4px;background:#2E2E44;border-radius:2px}
+.phone-inner{width:100%;height:100%;position:relative;overflow:hidden}
 
-/* ════════════════════════════════════
-   PHONE ENTRY SCREEN
-════════════════════════════════════ */
-#s-phone{
-  background:var(--bg);
-}
-.screen-header{
-  padding:1.2rem 1.4rem;display:flex;align-items:center;gap:0.8rem;
-  border-bottom:1px solid var(--border);
-}
-.back-btn{
-  width:38px;height:38px;border-radius:10px;background:var(--surface);
-  border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
-  cursor:pointer;font-size:1rem;color:var(--cream60);transition:all 0.2s;flex-shrink:0;
-}
-.back-btn:hover{color:var(--cream);border-color:var(--border2)}
-.screen-title{font-size:1rem;font-weight:700;color:var(--cream)}
-.screen-body{flex:1;padding:2rem 1.6rem}
+/* MAP CANVAS */
+#mapCanvas{position:absolute;inset:0;width:100%;height:100%}
 
-.phone-illustration{
-  width:80px;height:80px;margin:0 auto 1.8rem;
-  background:var(--gold-dim);border:1px solid var(--gold-rim);
-  border-radius:22px;display:flex;align-items:center;justify-content:center;
-  font-size:2.2rem;
-}
-.phone-heading{
-  font-family:var(--serif);font-size:1.9rem;font-weight:700;
-  color:var(--cream);text-align:center;margin-bottom:0.5rem;line-height:1.1;
-}
-.phone-sub{font-size:0.88rem;color:var(--cream60);text-align:center;margin-bottom:2rem;line-height:1.6}
+/* STATUS BAR */
+.sbar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:flex-end;padding:0 1rem .4rem;justify-content:space-between;z-index:10;font-size:.7rem;font-weight:600;color:var(--text);pointer-events:none}
 
-.input-group{margin-bottom:1rem}
-.input-label{
-  font-family:var(--mono);font-size:0.65rem;color:var(--cream30);
-  letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem;display:block;
+/* GPS BAR */
+.gps-bar{
+  position:absolute;top:44px;left:0;right:0;
+  padding:.38rem 1rem;display:flex;align-items:center;gap:.45rem;
+  font-size:.7rem;font-weight:600;z-index:10;transition:all .3s;
 }
-.phone-input-wrap{
-  display:flex;align-items:center;gap:0;
-  background:var(--surface2);border:1.5px solid var(--border2);border-radius:13px;
-  overflow:hidden;transition:border-color 0.2s;
-}
-.phone-input-wrap:focus-within{border-color:var(--gold-rim)}
-.phone-prefix{
-  padding:0.9rem 0 0.9rem 1rem;
-  font-size:0.95rem;font-weight:600;color:var(--cream);
-  border-right:1px solid var(--border);
-  background:var(--surface3);
-  white-space:nowrap;font-family:var(--mono);
-  padding-right:0.8rem;
-}
-.phone-input{
-  flex:1;background:transparent;border:none;
-  padding:0.9rem 1rem;color:var(--cream);font-size:1.05rem;
-  font-weight:600;letter-spacing:0.05em;font-family:var(--mono);
-  width:0;/* flex handles width */
-}
-.phone-input::placeholder{color:var(--cream30);font-weight:400;letter-spacing:0}
-.primary-btn{
-  width:100%;padding:1rem;border-radius:13px;
-  background:var(--gold);color:#08070A;border:none;
-  font-size:0.95rem;font-weight:700;cursor:pointer;
-  transition:background 0.2s,transform 0.15s;
-  display:flex;align-items:center;justify-content:center;gap:0.5rem;
-  margin-top:0.5rem;
-}
-.primary-btn:hover,.primary-btn:active{background:var(--gold2);transform:scale(0.99)}
-.primary-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
-.err-msg{font-size:0.78rem;color:var(--red);margin-top:0.4rem;display:none}
+.gps-ok{background:rgba(236,253,245,.96);color:var(--green);border-bottom:1px solid rgba(5,150,105,.18)}
+.gps-warn{background:rgba(255,251,235,.96);color:var(--amber);border-bottom:1px solid rgba(217,119,6,.18)}
+.gps-err{background:rgba(254,242,242,.96);color:var(--red);border-bottom:1px solid rgba(220,38,38,.18);animation:shake .45s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 
-/* ════════════════════════════════════
-   KYC SCREEN
-════════════════════════════════════ */
-#s-kyc{background:var(--bg)}
-.kyc-progress{
-  padding:1rem 1.4rem;display:flex;align-items:center;gap:0.8rem;
-  border-bottom:1px solid var(--border);
-}
-.progress-steps{flex:1;display:flex;gap:0.4rem}
-.progress-step{
-  height:3px;flex:1;border-radius:3px;
-  background:var(--border2);transition:background 0.3s;
-}
-.progress-step.done{background:var(--gold)}
-.progress-step.active{background:var(--gold-rim)}
-.progress-label{font-family:var(--mono);font-size:0.65rem;color:var(--cream30);white-space:nowrap}
+/* SEARCH FLOAT */
+.search-float{position:absolute;top:80px;left:.9rem;right:.9rem;z-index:10}
+.search-box{background:white;border-radius:var(--radius);box-shadow:0 4px 24px rgba(0,0,0,.12);overflow:hidden}
+.sf-row{display:flex;align-items:center;gap:.65rem;padding:.85rem 1rem;border-bottom:1px solid var(--border)}
+.sf-row:last-child{border-bottom:none}
+.sf-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.from-dot{background:var(--text)}.to-dot{background:var(--blue)}
+.sf-row input{flex:1;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:.83rem;color:var(--text);background:transparent}
+.sf-row input::placeholder{color:var(--text3)}
+.sf-vline{width:1px;height:16px;background:var(--border);margin-left:4px}
 
-.kyc-step{display:none;padding:1.6rem}
-.kyc-step.active{display:block}
-.kyc-step-title{
-  font-family:var(--serif);font-size:1.7rem;font-weight:700;
-  color:var(--cream);margin-bottom:0.3rem;
-}
-.kyc-step-sub{font-size:0.85rem;color:var(--cream60);margin-bottom:1.8rem;line-height:1.6}
+/* MAP CONTROLS */
+.map-ctrl{position:absolute;right:.9rem;top:150px;display:flex;flex-direction:column;gap:.35rem;z-index:10}
+.mc-btn{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:white;font-size:.9rem;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.09);transition:all .2s}
+.mc-btn:hover{border-color:var(--blue);color:var(--blue)}
 
-/* Form fields */
-.field-group{margin-bottom:1.1rem}
-.field-label{
-  font-family:var(--mono);font-size:0.63rem;color:var(--cream30);
-  letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.35rem;display:block;
+/* BOTTOM SHEET */
+.bsheet{
+  position:absolute;bottom:0;left:0;right:0;
+  background:white;border-radius:22px 22px 0 0;
+  box-shadow:0 -6px 32px rgba(0,0,0,.1);
+  z-index:20;padding-bottom:72px;
+  transition:transform .4s var(--ease);
 }
-.field-input,.field-select{
-  width:100%;background:var(--surface2);border:1.5px solid var(--border2);
-  border-radius:11px;padding:0.85rem 1rem;color:var(--cream);
-  font-size:0.93rem;transition:border-color 0.2s;font-weight:500;
-  appearance:none;-webkit-appearance:none;
-}
-.field-input:focus,.field-select:focus{border-color:var(--gold-rim)}
-.field-input::placeholder{color:var(--cream30);font-weight:400}
-.field-select option{background:#1C1A2A;color:var(--cream)}
-.field-input.has-err,.field-select.has-err{border-color:var(--red)}
-.field-err{font-size:0.72rem;color:var(--red);margin-top:0.3rem;display:none}
+.bhandle{width:34px;height:4px;background:var(--border);border-radius:2px;margin:.7rem auto 0}
+.bsc{padding:.9rem 1.1rem}
 
-.field-row{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem}
+/* STAGE PIPS */
+.stages{display:flex;gap:.3rem;margin-bottom:.9rem}
+.pip{flex:1;height:3px;background:var(--border);border-radius:2px;transition:background .5s}
+.pip.done{background:var(--blue)}
+.pip.active{background:var(--blue);animation:pipAnim 1s ease infinite}
+@keyframes pipAnim{0%,100%{opacity:1}50%{opacity:.45}}
 
-/* City selector */
-.city-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.5rem}
-.city-option{
-  padding:0.75rem 0.5rem;border-radius:11px;
-  background:var(--surface2);border:1.5px solid var(--border2);
-  text-align:center;cursor:pointer;transition:all 0.2s;
-}
-.city-option:hover{border-color:var(--border2)}
-.city-option.selected{background:var(--gold-dim);border-color:var(--gold-rim);color:var(--gold)}
-.city-option .city-icon{font-size:1.4rem;display:block;margin-bottom:0.25rem}
-.city-option .city-name{font-size:0.82rem;font-weight:600;color:var(--cream)}
-.city-option.selected .city-name{color:var(--gold)}
+/* DRIVER CARD */
+.dcard{display:flex;align-items:center;gap:.8rem;background:var(--surface);border-radius:var(--radius);padding:.85rem;margin:.4rem 0}
+.dav{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;font-size:1rem;color:white;flex-shrink:0}
+.dinfo{flex:1}
+.dname{font-family:'Sora',sans-serif;font-weight:700;font-size:.9rem;color:var(--text)}
+.dsub{font-size:.74rem;color:var(--text2);margin-top:.1rem}
+.drating{font-size:.72rem;color:var(--amber);font-weight:600;margin-top:.1rem}
+.ibt{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;font-size:.85rem;flex-shrink:0}
+.ibt:hover{background:var(--blue-l);border-color:var(--blue)}
 
-/* Vehicle selector */
-.vehicle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem}
-.vehicle-option{
-  padding:0.8rem 0.5rem;border-radius:11px;
-  background:var(--surface2);border:1.5px solid var(--border2);
-  text-align:center;cursor:pointer;transition:all 0.2s;
-}
-.vehicle-option.selected{background:var(--gold-dim);border-color:var(--gold-rim)}
-.vehicle-option .vi{font-size:1.5rem;display:block;margin-bottom:0.25rem}
-.vehicle-option .vl{font-size:0.72rem;font-weight:600;color:var(--cream60)}
-.vehicle-option.selected .vl{color:var(--gold)}
+/* ETA BAR */
+.eta-bar{display:flex;gap:.8rem;padding:.7rem 0;border-bottom:1px solid var(--border);margin-bottom:.7rem}
+.eta-it{text-align:center;flex:1}
+.eta-val{font-family:'Sora',sans-serif;font-size:1.25rem;font-weight:800;color:var(--blue);line-height:1}
+.eta-lbl{font-size:.62rem;color:var(--text3);margin-top:.18rem;text-transform:uppercase;letter-spacing:.05em}
 
-/* Photo upload */
-.photo-upload{
-  border:1.5px dashed var(--border2);border-radius:14px;
-  padding:1.8rem 1rem;text-align:center;cursor:pointer;
-  transition:border-color 0.2s,background 0.2s;position:relative;
-  margin-bottom:0.5rem;
-}
-.photo-upload:hover,.photo-upload.has-file{
-  border-color:var(--gold-rim);background:var(--gold-dim);
-}
-.photo-upload input[type=file]{
-  position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;
-}
-.photo-upload .pu-icon{font-size:2rem;margin-bottom:0.5rem;display:block}
-.photo-upload .pu-label{font-size:0.85rem;font-weight:600;color:var(--cream60)}
-.photo-upload .pu-sub{font-size:0.72rem;color:var(--cream30);margin-top:0.2rem}
-.photo-upload.has-file .pu-label{color:var(--green)}
-.photo-preview{
-  width:80px;height:80px;border-radius:12px;object-fit:cover;
-  margin:0 auto 0.5rem;border:2px solid var(--gold-rim);display:none;
-}
-.selfie-row{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem}
+/* SONAR SEARCH */
+.search-anim{display:flex;flex-direction:column;align-items:center;padding:1.2rem 0}
+.sonar{width:76px;height:76px;position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:.9rem}
+.sonar-core{width:38px;height:38px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:1rem;position:relative;z-index:2}
+.sring{position:absolute;border:2px solid var(--blue);border-radius:50%;animation:sonarX 2s ease-out infinite;opacity:0;left:50%;top:50%;transform:translate(-50%,-50%)}
+.sring:nth-child(2){animation-delay:.6s}
+.sring:nth-child(3){animation-delay:1.2s}
+@keyframes sonarX{0%{width:38px;height:38px;opacity:.8}100%{width:96px;height:96px;opacity:0}}
 
-/* KYC bottom bar */
-.kyc-footer{
-  padding:1rem 1.6rem;border-top:1px solid var(--border);
-  background:var(--surface);display:flex;gap:0.7rem;
-  position:sticky;bottom:0;
-}
-.btn-secondary{
-  flex:none;padding:0.9rem 1.2rem;border-radius:12px;
-  background:transparent;color:var(--cream60);border:1.5px solid var(--border2);
-  font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.2s;
-}
-.btn-secondary:hover{color:var(--cream);border-color:var(--border2)}
-.btn-primary{
-  flex:1;padding:0.9rem;border-radius:12px;
-  background:var(--gold);color:#08070A;border:none;
-  font-size:0.95rem;font-weight:700;cursor:pointer;
-  transition:background 0.2s,transform 0.15s;
-  display:flex;align-items:center;justify-content:center;gap:0.5rem;
-}
-.btn-primary:hover{background:var(--gold2)}
-.btn-primary:disabled{opacity:0.4;cursor:not-allowed}
+/* BUTTONS */
+.btn-p{width:100%;background:var(--blue);color:white;border:none;border-radius:var(--radius);padding:.9rem;font-family:'Sora',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:.45rem}
+.btn-p:hover{background:#1E40AF;transform:translateY(-1px)}
+.btn-p:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-o{background:white;color:var(--text);border:1px solid var(--border);border-radius:12px;padding:.65rem 1rem;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;width:100%}
+.btn-o:hover{border-color:var(--blue);color:var(--blue)}
+.btn-g{background:var(--green);color:white;border:none;border-radius:var(--radius);padding:.9rem;font-family:'Sora',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .2s;flex:1}
+.btn-r{background:var(--red);color:white;border:none;border-radius:var(--radius);padding:.9rem;font-family:'Sora',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .2s;flex:1}
 
-/* Upload progress */
-.upload-bar{
-  height:3px;background:var(--border2);border-radius:3px;margin-top:0.6rem;
-  overflow:hidden;display:none;
-}
-.upload-bar-fill{
-  height:100%;background:var(--gold);border-radius:3px;
-  width:0%;transition:width 0.3s;
-}
+/* BOTTOM NAV */
+.bnav{position:absolute;bottom:0;left:0;right:0;height:68px;background:white;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;z-index:30;padding-bottom:6px}
+.nit{display:flex;flex-direction:column;align-items:center;gap:.15rem;padding:.4rem .9rem;cursor:pointer;border-radius:10px;min-width:52px;transition:all .2s}
+.nit.active .nlbl{color:var(--blue)}
+.nico{font-size:1.15rem}
+.nlbl{font-size:.6rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.03em}
 
-/* ════════════════════════════════════
-   HOME SCREEN (Daily Attendance)
-════════════════════════════════════ */
-#s-home{background:var(--bg);position:relative;overflow:hidden}
-.home-bg-glow{
-  position:absolute;top:-10%;left:50%;transform:translateX(-50%);
-  width:600px;height:400px;
-  background:radial-gradient(ellipse,rgba(201,153,58,0.05) 0%,transparent 60%);
-  pointer-events:none;z-index:0;
-}
-.home-glow-available{background:radial-gradient(ellipse,rgba(34,197,94,0.06) 0%,transparent 60%)}
-.home-glow-offline{background:radial-gradient(ellipse,rgba(239,68,68,0.04) 0%,transparent 60%)}
+/* PRICE CARD */
+.price-card{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:.9rem;margin:.7rem 0}
+.prow{display:flex;justify-content:space-between;align-items:center;padding:.25rem 0}
+.prow:not(:last-child){border-bottom:1px solid var(--border)}
+.plbl{font-size:.78rem;color:var(--text2)}
+.pval{font-size:.82rem;font-weight:700;color:var(--text)}
+.ptotal .plbl{font-weight:700;color:var(--text);font-size:.82rem}
+.ptotal .pval{color:var(--blue);font-size:.95rem}
 
-/* Top bar */
-.home-topbar{
-  padding:1.1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;
-  border-bottom:1px solid var(--border);position:relative;z-index:1;
-}
-.home-logo{display:flex;align-items:center;gap:0.55rem}
-.home-logo-icon{
-  width:34px;height:34px;background:var(--gold-dim);border:1px solid var(--gold-rim);
-  border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;
-}
-.home-logo-name{font-family:var(--serif);font-size:1.1rem;font-weight:700;color:var(--cream)}
-.home-logo-name span{color:var(--gold)}
-.home-date-badge{
-  font-family:var(--mono);font-size:0.65rem;color:var(--cream30);
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:8px;padding:0.3rem 0.65rem;
-}
+/* SERVICE TILES */
+.srv-tiles{display:flex;gap:.6rem;margin-bottom:.9rem;overflow-x:auto;padding-bottom:.2rem;-webkit-overflow-scrolling:touch}
+.srv-tiles::-webkit-scrollbar{display:none}
+.stile{flex-shrink:0;border-radius:var(--radius);padding:.65rem .9rem;text-align:center;cursor:pointer;transition:all .2s;border:1px solid transparent;min-width:72px}
+.stile-active{background:var(--blue);color:white}
+.stile-inactive{background:var(--surface);border-color:var(--border);color:var(--text)}
+.stile-ico{font-size:1.2rem;margin-bottom:.25rem}
+.stile-name{font-size:.68rem;font-weight:600;white-space:nowrap}
+.stile-price{font-size:.6rem;opacity:.7;margin-top:.1rem}
 
-/* Driver profile strip */
-.driver-profile-strip{
-  padding:1.2rem 1.4rem;
-  display:flex;align-items:center;gap:1rem;
-  border-bottom:1px solid var(--border);
-  position:relative;z-index:1;
-  background:var(--surface);
-}
-.driver-profile-avatar{
-  width:50px;height:50px;border-radius:14px;flex-shrink:0;
-  background:linear-gradient(135deg,var(--gold),#7A4F00);
-  display:flex;align-items:center;justify-content:center;
-  font-family:var(--serif);font-size:1.3rem;font-weight:700;color:#08070A;
-  overflow:hidden;
-}
-.driver-profile-avatar img{width:100%;height:100%;object-fit:cover}
-.driver-profile-info{flex:1;min-width:0}
-.driver-profile-name{font-size:1rem;font-weight:700;color:var(--cream);margin-bottom:0.15rem}
-.driver-profile-meta{font-size:0.75rem;color:var(--cream60);display:flex;gap:0.6rem;flex-wrap:wrap}
-.driver-profile-meta span{display:flex;align-items:center;gap:0.2rem}
-.profile-edit-btn{
-  width:34px;height:34px;border-radius:9px;background:var(--surface2);
-  border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
-  cursor:pointer;font-size:0.85rem;color:var(--cream60);transition:all 0.2s;flex-shrink:0;
-}
-.profile-edit-btn:hover{border-color:var(--gold-rim);color:var(--gold)}
+/* ANTI-CHEAT PANEL */
+.ac-panel{background:var(--surface);border-radius:var(--radius);padding:.85rem;margin:.4rem 0}
+.ac-title{font-family:'Sora',sans-serif;font-size:.75rem;font-weight:700;margin-bottom:.5rem;color:var(--text)}
+.ac-row{display:flex;align-items:center;justify-content:space-between;padding:.28rem 0}
+.ac-lbl{font-size:.74rem;color:var(--text2);display:flex;align-items:center;gap:.35rem}
+.ac-s{font-size:.68rem;font-weight:700;padding:.18rem .55rem;border-radius:20px}
+.ac-ok{background:var(--green-l);color:var(--green)}
+.ac-warn{background:var(--amber-l);color:var(--amber)}
+.ac-err{background:var(--red-l);color:var(--red)}
 
-/* Main attendance area */
-.attendance-area{
-  flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;padding:2rem 1.4rem;
-  position:relative;z-index:1;
-}
-.status-ring{
-  position:relative;margin-bottom:1.5rem;
-}
-/* Big toggle button */
-.attendance-btn{
-  width:200px;height:200px;border-radius:50%;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:0.6rem;cursor:pointer;border:none;
-  transition:transform 0.2s var(--ease),box-shadow 0.3s;
-  position:relative;overflow:hidden;
-}
-.attendance-btn.available{
-  background:radial-gradient(circle at 40% 35%,#2ECC71,#16A34A);
-  box-shadow:0 0 0 12px rgba(34,197,94,0.1),0 0 0 24px rgba(34,197,94,0.05),0 20px 50px rgba(34,197,94,0.35);
-}
-.attendance-btn.offline{
-  background:radial-gradient(circle at 40% 35%,#374151,#1F2937);
-  box-shadow:0 0 0 12px rgba(255,255,255,0.04),0 20px 40px rgba(0,0,0,0.5);
-}
-.attendance-btn:active{transform:scale(0.94)}
-.attendance-btn .btn-icon{font-size:3rem;line-height:1;display:block}
-.attendance-btn .btn-text{font-size:0.9rem;font-weight:700;color:#fff;letter-spacing:0.02em}
-.attendance-btn .btn-subtext{font-size:0.7rem;color:rgba(255,255,255,0.7);font-weight:400}
-/* Pulsing ring for available */
-.attendance-btn.available::after{
-  content:'';position:absolute;inset:-8px;border-radius:50%;
-  border:2px solid rgba(34,197,94,0.4);
-  animation:ringPulse 2.5s ease infinite;
-}
-@keyframes ringPulse{
-  0%{opacity:0.8;transform:scale(1)}
-  100%{opacity:0;transform:scale(1.15)}
-}
+/* ONLINE TOGGLE */
+.otoggle{width:88px;height:88px;border-radius:50%;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;transition:all .35s;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.otoggle.online{background:var(--green);color:white}
+.otoggle.offline{background:var(--surface);color:var(--text3);border:2px solid var(--border)}
+.olbl{margin-top:.6rem;font-family:'Sora',sans-serif;font-size:.8rem;font-weight:700;color:var(--text2)}
 
-.status-label{
-  font-family:var(--serif);font-size:1.5rem;font-weight:700;
-  color:var(--cream);text-align:center;margin-bottom:0.3rem;
-}
-.status-hint{
-  font-size:0.82rem;color:var(--cream60);text-align:center;
-  margin-bottom:0.5rem;
-}
-.status-since{
-  font-family:var(--mono);font-size:0.68rem;color:var(--cream30);
-  text-align:center;
-}
+/* INCOMING ALERT */
+.inc-alert{position:absolute;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;z-index:50;padding:1rem;animation:fadeI .3s ease}
+@keyframes fadeI{from{opacity:0}to{opacity:1}}
+.inc-card{background:white;border-radius:22px;padding:1.4rem;width:100%;animation:slideU .4s var(--ease)}
+@keyframes slideU{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.timer-ring{width:58px;height:58px;border-radius:50%;background:var(--blue-l);border:3px solid var(--blue);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:1.3rem;font-weight:800;color:var(--blue);margin:0 auto .9rem;transition:border-color .3s}
+.timer-ring.urgent{border-color:var(--red);color:var(--red);background:var(--red-l)}
 
-/* Today's info strip */
-.today-strip{
-  width:100%;display:grid;grid-template-columns:1fr 1fr;
-  gap:0.75rem;margin-top:1.5rem;
-}
-.today-tile{
-  background:var(--surface);border:1px solid var(--border);border-radius:14px;
-  padding:1rem;text-align:center;
-}
-.today-tile .tv{
-  font-family:var(--serif);font-size:1.6rem;font-weight:700;
-  color:var(--gold);line-height:1;margin-bottom:0.2rem;
-}
-.today-tile .tl{font-size:0.72rem;color:var(--cream60);font-family:var(--mono);letter-spacing:0.06em}
+/* ROUTE LOG */
+.rlog{background:var(--surface);border-radius:10px;padding:.7rem;max-height:100px;overflow-y:auto;font-size:.64rem;color:var(--text2);line-height:1.9;font-family:'DM Mono','Courier New',monospace}
+.rlog::-webkit-scrollbar{width:2px}
+.rlog::-webkit-scrollbar-thumb{background:var(--border)}
 
-/* Bottom sheet with quick actions */
-.home-footer{
-  padding:1rem 1.4rem 1.6rem;border-top:1px solid var(--border);
-  position:relative;z-index:1;
-  background:var(--surface);
-}
-.quick-actions{display:flex;gap:0.6rem}
-.qa-btn{
-  flex:1;padding:0.75rem 0.5rem;border-radius:12px;
-  background:var(--surface2);border:1px solid var(--border);
-  cursor:pointer;transition:all 0.2s;
-  display:flex;flex-direction:column;align-items:center;gap:0.3rem;
-  text-decoration:none;
-}
-.qa-btn:hover{border-color:var(--gold-rim);background:var(--gold-dim)}
-.qa-btn .qi{font-size:1.2rem}
-.qa-btn .ql{font-size:0.7rem;font-weight:600;color:var(--cream60);text-align:center;line-height:1.2}
-.qa-btn:hover .ql{color:var(--gold)}
+/* RATING STARS */
+.rstars{display:flex;gap:.45rem;justify-content:center;padding:.8rem 0}
+.rstar{font-size:1.9rem;cursor:pointer;transition:transform .2s;opacity:.25;color:var(--amber)}
+.rstar.lit{opacity:1}
+.rstar:hover{transform:scale(1.2)}
 
-/* Snack bar at bottom */
-.snack{
-  position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(80px);
-  background:var(--surface);border:1px solid var(--border2);border-radius:12px;
-  padding:0.75rem 1.3rem;font-size:0.85rem;font-weight:600;color:var(--cream);
-  z-index:9999;transition:transform 0.4s var(--ease);white-space:nowrap;
-  box-shadow:0 8px 30px rgba(0,0,0,0.5);pointer-events:none;
-}
-.snack.visible{transform:translateX(-50%) translateY(0)}
-.snack.ok{color:var(--green);border-color:var(--green-rim)}
-.snack.err{color:var(--red);border-color:var(--red-rim)}
+/* SECTION LABEL */
+.slbl{font-size:.68rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.4rem}
 
-/* ════════════════════════════════════
-   KYC SUBMITTED SCREEN
-════════════════════════════════════ */
-#s-submitted{
-  background:var(--bg);align-items:center;justify-content:center;
-  padding:2rem 1.6rem;text-align:center;
-}
-.submitted-icon{
-  width:90px;height:90px;border-radius:25px;
-  background:var(--green-dim);border:1px solid var(--green-rim);
-  display:flex;align-items:center;justify-content:center;
-  font-size:2.8rem;margin:0 auto 1.5rem;
-}
-.submitted-title{
-  font-family:var(--serif);font-size:2rem;font-weight:700;color:var(--cream);
-  margin-bottom:0.5rem;
-}
-.submitted-desc{font-size:0.9rem;color:var(--cream60);line-height:1.7;margin-bottom:2rem;max-width:300px}
-.submitted-info{
-  background:var(--surface);border:1px solid var(--border);border-radius:14px;
-  padding:1.2rem;width:100%;max-width:340px;margin-bottom:1.5rem;
-}
-.si-row{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.85rem}
-.si-row:last-child{border-bottom:none}
-.si-label{color:var(--cream60)}
-.si-value{color:var(--cream);font-weight:600}
-.submitted-contact{font-size:0.8rem;color:var(--cream30);display:flex;align-items:center;gap:0.3rem;justify-content:center}
+/* TODAY STATS (driver) */
+.dstats{display:flex;gap:.55rem;margin-top:.7rem}
+.dstat{flex:1;text-align:center;background:var(--surface);border-radius:12px;padding:.7rem .4rem}
+.dstat-num{font-family:'Sora',sans-serif;font-size:1.2rem;font-weight:800;line-height:1}
+.dstat-lbl{font-size:.6rem;color:var(--text3);margin-top:.2rem;text-transform:uppercase}
 
-/* ════════════════════════════════════
-   KEYFRAMES
-════════════════════════════════════ */
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes slideIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}
+/* ═══════════════════════════════════════ ADMIN */
+.admin{flex:1;min-width:280px;max-width:660px}
+.adm-hdr{background:white;border-radius:16px;padding:1.1rem 1.3rem;margin-bottom:.9rem;box-shadow:0 2px 12px rgba(0,0,0,.05)}
+.adm-title{font-family:'Sora',sans-serif;font-size:1.05rem;font-weight:800;color:var(--text)}
+.adm-sub{font-size:.76rem;color:var(--text3);margin-top:.15rem}
 
-.screen-body,.kyc-step{animation:slideIn 0.35s var(--ease) both}
+.srow{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:.9rem}
+.scard{background:white;border-radius:13px;padding:.9rem;box-shadow:0 2px 10px rgba(0,0,0,.05);text-align:center}
+.snum{font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:800;color:var(--text);line-height:1}
+.slb{font-size:.62rem;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-top:.25rem}
+.scard.cblue .snum{color:var(--blue)}.scard.cgreen .snum{color:var(--green)}.scard.camber .snum{color:var(--amber)}.scard.cred .snum{color:var(--red)}
 
-/* ════════════════════════════════════
-   MISC
-════════════════════════════════════ */
-.text-center{text-align:center}
-.mt1{margin-top:0.6rem}
-.dot-green{width:8px;height:8px;background:var(--green);border-radius:50%;display:inline-block;animation:pulse 2s ease infinite}
-.dot-red{width:8px;height:8px;background:var(--red);border-radius:50%;display:inline-block}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.5)}70%{box-shadow:0 0 0 6px rgba(34,197,94,0)}}
+.adm-card{background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.05);margin-bottom:.9rem}
+.adm-card-hdr{padding:.9rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.adm-card-title{font-family:'Sora',sans-serif;font-size:.85rem;font-weight:700;color:var(--text)}
+#adminMapCanvas{width:100%;height:210px;display:block}
+
+.chip{display:inline-flex;align-items:center;gap:.25rem;background:var(--blue-l);color:var(--blue);border-radius:20px;padding:.22rem .65rem;font-size:.68rem;font-weight:700}
+.chip-red{background:var(--red-l);color:var(--red)}
+.chip-green{background:var(--green-l);color:var(--green)}
+.chip-amber{background:var(--amber-l);color:var(--amber)}
+
+.alrt-badge{background:var(--red);color:white;border-radius:20px;font-size:.62rem;font-weight:700;padding:.1rem .48rem}
+
+.ait{padding:.7rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:.7rem;animation:aIn .4s ease}
+@keyframes aIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.ait:last-child{border-bottom:none}
+.ait-ico{font-size:.95rem;flex-shrink:0;margin-top:.1rem}
+.ait-title{font-size:.8rem;font-weight:600;color:var(--text)}
+.ait-time{font-size:.68rem;color:var(--text3);margin-top:.1rem}
+
+.dtbl-hdr{padding:.9rem 1.2rem;border-bottom:1px solid var(--border)}
+.dr-row{padding:.75rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem}
+.dr-row:last-child{border-bottom:none}
+.drav{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;color:white;flex-shrink:0}
+.drinf{flex:1}
+.drname{font-size:.8rem;font-weight:600;color:var(--text)}
+.drsub{font-size:.68rem;color:var(--text3)}
+.drst{font-size:.68rem;font-weight:700;padding:.18rem .55rem;border-radius:20px}
+.dr-trip{background:var(--blue-l);color:var(--blue)}
+.dr-online{background:var(--green-l);color:var(--green)}
+.dr-offline{background:var(--surface);color:var(--text3)}
+.dr-alert{background:var(--red-l);color:var(--red)}
+
+/* ADMIN ACTIONS */
+.adm-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.9rem}
+.adm-action-btn{padding:.5rem 1rem;border:1px solid var(--border);background:white;border-radius:9px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;color:var(--text)}
+.adm-action-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-l)}
+.adm-action-btn.red:hover{border-color:var(--red);color:var(--red);background:var(--red-l)}
+
+/* HIDDEN */
+.hidden{display:none!important}
+/* SCROLL */
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* ═══════════════════════════════════════ MOBILE */
+@media(max-width:500px){
+  .main{padding:.6rem;gap:.8rem}
+  .phone-frame{width:100vw;height:calc(100svh - 54px);border-radius:0;border:none;box-shadow:none}
+  .notch{display:none}
+  .admin{display:none}
+  .mode-tabs{display:none}
+  .sys-badge{display:none}
+  .demo-btn{font-size:.65rem;padding:.3rem .6rem}
+}
+@media(max-width:960px){.srow{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════
-     LOADING SCREEN
-══════════════════════════════════ -->
-<div class="screen active" id="s-loading">
-  <div class="loading-logo">
-    <div class="loading-icon">🚗</div>
-    <div>
-      <div class="loading-wordmark">Drive<span>Buddy</span></div>
-      <div class="loading-sub">Driver Portal</div>
-    </div>
-    <div class="loading-spinner"></div>
+<!-- ══════════════════════════════════════════ TOP BAR -->
+<div class="top-bar">
+  <div class="brand">🚗 Drive<span>Buddy</span></div>
+  <div class="mode-tabs">
+    <button class="mtab active" onclick="setView('user',this)">👤 User</button>
+    <button class="mtab" onclick="setView('driver',this)">🚗 Driver</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:.5rem">
+    <button class="demo-btn" onclick="autoDemo()">▶ Demo Flow</button>
+    <div class="sys-badge"><div class="ldot"></div>Live</div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════
-     WELCOME SCREEN
-══════════════════════════════════ -->
-<div class="screen" id="s-welcome">
-  <div class="welcome-glow"></div>
-  <div class="welcome-inner">
-    <div class="welcome-badge">🚗 Driver Portal · DriveBuddy</div>
-    <div class="welcome-title">Namaste,<br><em>Partner!</em></div>
-    <div class="welcome-desc">This is your daily check-in app. Mark yourself available when you're ready to take rides.</div>
-    <div class="welcome-steps">
-      <div class="welcome-step">
-        <div class="ws-num">1</div>
-        <div class="ws-text"><strong>Register once</strong> — fill your KYC details &amp; documents</div>
-      </div>
-      <div class="welcome-step">
-        <div class="ws-num">2</div>
-        <div class="ws-text"><strong>Daily check-in</strong> — tap Available when you're ready</div>
-      </div>
-      <div class="welcome-step">
-        <div class="ws-num">3</div>
-        <div class="ws-text"><strong>Get bookings</strong> — customers are automatically assigned to you</div>
-      </div>
-    </div>
-    <button class="welcome-cta" onclick="goTo('s-phone')">
-      Get Started →
-    </button>
-  </div>
-</div>
+<!-- ══════════════════════════════════════════ MAIN -->
+<div class="main">
 
-<!-- ══════════════════════════════════
-     PHONE ENTRY SCREEN
-══════════════════════════════════ -->
-<div class="screen" id="s-phone">
-  <div class="screen-header">
-    <button class="back-btn" onclick="goTo('s-welcome')">←</button>
-    <div class="screen-title">Sign In</div>
-  </div>
-  <div class="screen-body">
-    <div class="phone-illustration">📱</div>
-    <div class="phone-heading">Your Phone<br>Number</div>
-    <div class="phone-sub">We'll check if you're already registered or need to complete KYC.</div>
-    <div class="input-group">
-      <label class="input-label">Mobile Number</label>
-      <div class="phone-input-wrap">
-        <div class="phone-prefix">+91</div>
-        <input type="tel" class="phone-input" id="phoneInput" placeholder="9876543210"
-          maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')">
-      </div>
-      <div class="err-msg" id="phoneErr">Please enter a valid 10-digit mobile number.</div>
-    </div>
-    <button class="primary-btn" id="phoneBtn" onclick="handlePhoneSubmit()">Continue →</button>
-    <div class="upload-bar" id="phoneLoading" style="display:block;margin-top:1rem">
-      <div class="upload-bar-fill" id="phoneLoadFill" style="display:none"></div>
-    </div>
-  </div>
-</div>
+  <!-- ════════════════ PHONE FRAME -->
+  <div class="phone-wrap">
+    <div class="phone-frame">
+      <div class="notch"></div>
+      <div class="phone-inner">
 
-<!-- ══════════════════════════════════
-     KYC SCREEN (3 steps)
-══════════════════════════════════ -->
-<div class="screen" id="s-kyc">
-  <!-- Progress bar -->
-  <div class="kyc-progress">
-    <button class="back-btn" id="kycBackBtn" onclick="kycBack()">←</button>
-    <div class="progress-steps">
-      <div class="progress-step active" id="ps-1"></div>
-      <div class="progress-step" id="ps-2"></div>
-      <div class="progress-step" id="ps-3"></div>
-    </div>
-    <div class="progress-label" id="progressLabel">Step 1 / 3</div>
-  </div>
+        <!-- MAP -->
+        <canvas id="mapCanvas"></canvas>
 
-  <!-- STEP 1: Personal Info -->
-  <div class="kyc-step active" id="kyc-step-1" style="flex:1;overflow-y:auto">
-    <div class="kyc-step-title">Personal<br>Details</div>
-    <div class="kyc-step-sub">Fill your basic information. This will appear to customers.</div>
-    <div class="field-group">
-      <label class="field-label">Full Name *</label>
-      <input type="text" class="field-input" id="k_name" placeholder="Ramesh Kumar Sahu">
-    </div>
-    <div class="field-group">
-      <label class="field-label">Your City *</label>
-      <div class="city-grid">
-        <div class="city-option" onclick="selectCity(this,'Raipur')"><span class="city-icon">🏢</span><span class="city-name">Raipur</span></div>
-        <div class="city-option" onclick="selectCity(this,'Bhilai')"><span class="city-icon">🏭</span><span class="city-name">Bhilai</span></div>
-        <div class="city-option" onclick="selectCity(this,'Durg')"><span class="city-icon">🏙️</span><span class="city-name">Durg</span></div>
-        <div class="city-option" onclick="selectCity(this,'Bilaspur')"><span class="city-icon">🏛️</span><span class="city-name">Bilaspur</span></div>
-      </div>
-    </div>
-    <div class="field-row">
-      <div class="field-group">
-        <label class="field-label">Experience (years) *</label>
-        <input type="number" class="field-input" id="k_exp" placeholder="6" min="1" max="40" inputmode="numeric">
-      </div>
-      <div class="field-group">
-        <label class="field-label">License Number</label>
-        <input type="text" class="field-input" id="k_license" placeholder="CG04 2019 0012345" style="text-transform:uppercase">
-      </div>
-    </div>
-  </div>
+        <!-- STATUS BAR -->
+        <div class="sbar"><span id="sbarTime">9:41</span><span style="letter-spacing:.04em">📶 ████ 🔋</span></div>
 
-  <!-- STEP 2: Vehicle & Availability -->
-  <div class="kyc-step" id="kyc-step-2" style="flex:1;overflow-y:auto">
-    <div class="kyc-step-title">Vehicle<br>Details</div>
-    <div class="kyc-step-sub">Tell us what kind of vehicle you typically drive for our customers.</div>
-    <div class="field-group">
-      <label class="field-label">Vehicle Type *</label>
-      <div class="vehicle-grid">
-        <div class="vehicle-option" onclick="selectVehicle(this,'Sedan')"><span class="vi">🚗</span><span class="vl">Sedan</span></div>
-        <div class="vehicle-option" onclick="selectVehicle(this,'Hatchback')"><span class="vi">🚙</span><span class="vl">Hatchback</span></div>
-        <div class="vehicle-option" onclick="selectVehicle(this,'SUV')"><span class="vi">🛻</span><span class="vl">SUV/MUV</span></div>
-        <div class="vehicle-option" onclick="selectVehicle(this,'Van')"><span class="vi">🚐</span><span class="vl">Van</span></div>
-        <div class="vehicle-option" onclick="selectVehicle(this,'Luxury')"><span class="vi">🏎️</span><span class="vl">Luxury</span></div>
-        <div class="vehicle-option" onclick="selectVehicle(this,'Any')"><span class="vi">✅</span><span class="vl">Any</span></div>
-      </div>
-    </div>
-    <div class="field-group" style="margin-top:0.5rem">
-      <label class="field-label">Vehicle Name (optional)</label>
-      <input type="text" class="field-input" id="k_vehicle_name" placeholder="Honda City, Swift Dzire…">
-    </div>
-    <div class="field-group">
-      <label class="field-label">Services You Can Do *</label>
-      <div style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.2rem" id="servicesGroup">
-        <label style="display:flex;align-items:center;gap:0.7rem;padding:0.75rem 1rem;background:var(--surface2);border:1.5px solid var(--border2);border-radius:10px;cursor:pointer;transition:border-color 0.2s" id="svc-personal">
-          <input type="checkbox" value="Personal Driver" style="accent-color:var(--gold);width:16px;height:16px" onchange="toggleService(this)"> <span style="font-size:0.88rem;font-weight:500">🚗 Personal Driver</span>
-        </label>
-        <label style="display:flex;align-items:center;gap:0.7rem;padding:0.75rem 1rem;background:var(--surface2);border:1.5px solid var(--border2);border-radius:10px;cursor:pointer;transition:border-color 0.2s" id="svc-night">
-          <input type="checkbox" value="Night Driver" style="accent-color:var(--gold);width:16px;height:16px" onchange="toggleService(this)"> <span style="font-size:0.88rem;font-weight:500">🌙 Night Driver</span>
-        </label>
-        <label style="display:flex;align-items:center;gap:0.7rem;padding:0.75rem 1rem;background:var(--surface2);border:1.5px solid var(--border2);border-radius:10px;cursor:pointer;transition:border-color 0.2s" id="svc-hospital">
-          <input type="checkbox" value="Hospital/Medical" style="accent-color:var(--gold);width:16px;height:16px" onchange="toggleService(this)"> <span style="font-size:0.88rem;font-weight:500">🏥 Hospital/Medical</span>
-        </label>
-        <label style="display:flex;align-items:center;gap:0.7rem;padding:0.75rem 1rem;background:var(--surface2);border:1.5px solid var(--border2);border-radius:10px;cursor:pointer;transition:border-color 0.2s" id="svc-outstation">
-          <input type="checkbox" value="Outstation" style="accent-color:var(--gold);width:16px;height:16px" onchange="toggleService(this)"> <span style="font-size:0.88rem;font-weight:500">✈️ Outstation</span>
-        </label>
-      </div>
-    </div>
-  </div>
+        <!-- ══════════ USER VIEW -->
+        <div id="userView">
+          <div class="gps-bar gps-ok" id="userGps">📍 &nbsp;GPS Active · Shankar Nagar, Raipur</div>
 
-  <!-- STEP 3: Documents -->
-  <div class="kyc-step" id="kyc-step-3" style="flex:1;overflow-y:auto">
-    <div class="kyc-step-title">Upload<br>Documents</div>
-    <div class="kyc-step-sub">Required for verification. Your documents are stored securely and never shared publicly.</div>
-    <div class="field-group">
-      <label class="field-label">Driving License / Aadhar Card *</label>
-      <div class="photo-upload" id="licenseUploadArea" onclick="document.getElementById('licenseFile').click()">
-        <input type="file" id="licenseFile" accept="image/*" style="display:none" onchange="handleFileSelect('license',this)">
-        <img class="photo-preview" id="licensePreview">
-        <span class="pu-icon" id="licenseIcon">🪪</span>
-        <div class="pu-label" id="licenseLabel">Tap to upload ID Proof</div>
-        <div class="pu-sub">Driving License or Aadhar Card</div>
-        <div class="upload-bar" id="licenseBar"><div class="upload-bar-fill" id="licenseBarFill"></div></div>
-      </div>
-    </div>
-    <div class="field-group">
-      <label class="field-label">Your Selfie *</label>
-      <div class="photo-upload" id="selfieUploadArea" onclick="document.getElementById('selfieFile').click()">
-        <input type="file" id="selfieFile" accept="image/*" capture="user" style="display:none" onchange="handleFileSelect('selfie',this)">
-        <img class="photo-preview" id="selfiePreview">
-        <span class="pu-icon" id="selfieIcon">🤳</span>
-        <div class="pu-label" id="selfieLabel">Take or upload selfie</div>
-        <div class="pu-sub">Clear photo of your face</div>
-        <div class="upload-bar" id="selfieBar"><div class="upload-bar-fill" id="selfieBarFill"></div></div>
-      </div>
-    </div>
-    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:0.9rem 1rem;margin-top:0.5rem">
-      <div style="font-size:0.78rem;color:var(--cream60);line-height:1.65">
-        🔒 <strong style="color:var(--cream)">Your data is secure.</strong> Documents are uploaded to encrypted storage. DriveBuddy team will review your KYC within 24 hours.
-      </div>
-    </div>
-  </div>
+          <div class="search-float" id="searchFloat">
+            <div class="search-box">
+              <div class="sf-row"><div class="sf-dot from-dot"></div><input type="text" value="Shankar Nagar, Raipur" id="fromInp" placeholder="Pickup location"></div>
+              <div style="padding-left:1.35rem"><div class="sf-vline"></div></div>
+              <div class="sf-row"><div class="sf-dot to-dot"></div><input type="text" value="VIP Road, Raipur" id="toInp" placeholder="Where to?"><span style="font-size:.75rem;color:var(--text3)">🔍</span></div>
+            </div>
+          </div>
 
-  <!-- KYC Footer -->
-  <div class="kyc-footer">
-    <button class="btn-secondary" id="kycPrevBtn" onclick="kycPrev()" style="display:none">Back</button>
-    <button class="btn-primary" id="kycNextBtn" onclick="kycNext()">Next →</button>
-  </div>
-</div>
+          <div class="map-ctrl" id="mapCtrl">
+            <button class="mc-btn" onclick="doZoom(1.25)">+</button>
+            <button class="mc-btn" onclick="doZoom(.8)">−</button>
+            <button class="mc-btn" onclick="centerMap()" title="Center">⊙</button>
+          </div>
 
-<!-- ══════════════════════════════════
-     KYC SUBMITTED SCREEN
-══════════════════════════════════ -->
-<div class="screen" id="s-submitted">
-  <div class="submitted-icon">✅</div>
-  <div class="submitted-title">KYC Submitted!</div>
-  <div class="submitted-desc">Thank you! The DriveBuddy team will review and approve your profile within 24 hours. You'll receive a call once approved.</div>
-  <div class="submitted-info" id="submittedInfo"></div>
-  <div class="submitted-contact">📞 Questions? Call Nihal — 9111473929</div>
-</div>
+          <!-- SHEET 0: IDLE -->
+          <div class="bsheet" id="sh0" style="height:310px">
+            <div class="bhandle"></div>
+            <div class="bsc">
+              <div class="slbl">Choose Service</div>
+              <div class="srv-tiles" id="srvTiles">
+                <div class="stile stile-active" onclick="pickSrv(this,'personal')"><div class="stile-ico">🚗</div><div class="stile-name">Personal</div><div class="stile-price">₹300+</div></div>
+                <div class="stile stile-inactive" onclick="pickSrv(this,'night')"><div class="stile-ico">🌙</div><div class="stile-name">Night</div><div class="stile-price">₹500</div></div>
+                <div class="stile stile-inactive" onclick="pickSrv(this,'hospital')"><div class="stile-ico">🏥</div><div class="stile-name">Medical</div><div class="stile-price">Priority</div></div>
+                <div class="stile stile-inactive" onclick="pickSrv(this,'outstation')"><div class="stile-ico">✈️</div><div class="stile-name">Outstation</div><div class="stile-price">₹1200+</div></div>
+              </div>
+              <div class="price-card">
+                <div class="prow"><span class="plbl">Base fare (3 hrs)</span><span class="pval">₹600</span></div>
+                <div class="prow"><span class="plbl">Driver verified fee</span><span class="pval">Included</span></div>
+                <div class="prow ptotal"><span class="plbl">Estimated Total</span><span class="pval">₹600</span></div>
+              </div>
+              <button class="btn-p" onclick="startBooking()">🚗 &nbsp;Book Driver Now</button>
+            </div>
+          </div>
 
-<!-- ══════════════════════════════════
-     HOME / ATTENDANCE SCREEN
-══════════════════════════════════ -->
-<div class="screen" id="s-home">
-  <div class="home-bg-glow" id="homeBgGlow"></div>
+          <!-- SHEET 1: SEARCHING -->
+          <div class="bsheet hidden" id="sh1" style="height:250px">
+            <div class="bhandle"></div>
+            <div class="bsc">
+              <div class="stages"><div class="pip done"></div><div class="pip active"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+              <div class="search-anim">
+                <div class="sonar"><div class="sring"></div><div class="sring"></div><div class="sonar-core">🚗</div></div>
+                <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:.95rem;color:var(--text)">Finding your driver…</div>
+                <div style="font-size:.76rem;color:var(--text3);margin-top:.25rem">3 verified drivers nearby</div>
+              </div>
+              <button class="btn-o" onclick="setState('idle')">Cancel Request</button>
+            </div>
+          </div>
 
-  <!-- Top bar -->
-  <div class="home-topbar">
-    <div class="home-logo">
-      <div class="home-logo-icon">🚗</div>
-      <div class="home-logo-name">Drive<span>Buddy</span></div>
-    </div>
-    <div class="home-date-badge" id="homeDateBadge"></div>
-  </div>
+          <!-- SHEET 2: ASSIGNED / ARRIVING -->
+          <div class="bsheet hidden" id="sh2" style="height:300px">
+            <div class="bhandle"></div>
+            <div class="bsc">
+              <div class="stages"><div class="pip done"></div><div class="pip done"></div><div class="pip active"></div><div class="pip"></div><div class="pip"></div></div>
+              <div style="font-size:.74rem;font-weight:700;color:var(--green);margin-bottom:.6rem;display:flex;align-items:center;gap:.35rem">✅ Driver Assigned — Arriving in <span id="etaMin" style="color:var(--blue)">8</span> min</div>
+              <div class="dcard">
+                <div class="dav" style="background:linear-gradient(135deg,#1D4ED8,#7C3AED)">RK</div>
+                <div class="dinfo">
+                  <div class="dname">Rakesh Kumar</div>
+                  <div class="dsub">🚗 CG-04 AB-1234 · Swift Dzire</div>
+                  <div class="drating">★ 4.9 &nbsp;<span style="color:var(--text3);font-weight:400">(284 rides)</span></div>
+                </div>
+                <div style="display:flex;gap:.4rem">
+                  <div class="ibt" onclick="alert('📞 Calling Rakesh: 9111473929')">📞</div>
+                  <div class="ibt">💬</div>
+                </div>
+              </div>
+              <div class="eta-bar">
+                <div class="eta-it"><div class="eta-val" id="etaMinV">8</div><div class="eta-lbl">Min Away</div></div>
+                <div class="eta-it"><div class="eta-val" id="etaDistV">2.4</div><div class="eta-lbl">km Away</div></div>
+                <div class="eta-it"><div class="eta-val">🛡️</div><div class="eta-lbl">Verified</div></div>
+              </div>
+              <div style="font-size:.7rem;color:var(--text3);text-align:center">📍 Real-time GPS tracking active</div>
+            </div>
+          </div>
 
-  <!-- Driver profile strip -->
-  <div class="driver-profile-strip">
-    <div class="driver-profile-avatar" id="profileAvatar"></div>
-    <div class="driver-profile-info">
-      <div class="driver-profile-name" id="profileName">–</div>
-      <div class="driver-profile-meta">
-        <span id="profileCity">–</span>
-        <span id="profileExp">–</span>
-        <span id="profileServices">–</span>
-      </div>
-    </div>
-    <div class="profile-edit-btn" title="View Profile" onclick="showSnack('Profile editing coming soon')">👤</div>
-  </div>
+          <!-- SHEET 3: TRIP -->
+          <div class="bsheet hidden" id="sh3" style="height:300px">
+            <div class="bhandle"></div>
+            <div class="bsc">
+              <div class="stages"><div class="pip done"></div><div class="pip done"></div><div class="pip done"></div><div class="pip active"></div><div class="pip"></div></div>
+              <div style="font-size:.74rem;font-weight:700;color:var(--blue);margin-bottom:.6rem">🚗 Trip In Progress — GPS Locked</div>
+              <div class="dcard">
+                <div class="dav" style="background:linear-gradient(135deg,#059669,#0D9488)">RK</div>
+                <div class="dinfo"><div class="dname">Rakesh Kumar</div><div class="dsub" id="tripStatus">📍 En route to destination…</div></div>
+                <div class="ibt" onclick="alert('📞 Calling Rakesh: 9111473929')">📞</div>
+              </div>
+              <div class="eta-bar">
+                <div class="eta-it"><div class="eta-val" id="tEta">14</div><div class="eta-lbl">Min Left</div></div>
+                <div class="eta-it"><div class="eta-val" id="tDist">0.0</div><div class="eta-lbl">km Done</div></div>
+                <div class="eta-it"><div class="eta-val" id="tSpeed">32</div><div class="eta-lbl">km/h</div></div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:center;gap:.5rem;font-size:.7rem;color:var(--text3)">
+                <span style="background:var(--green-l);color:var(--green);border-radius:20px;padding:.18rem .55rem;font-weight:700;font-size:.65rem">🔒 GPS Verified</span>
+                <span style="background:var(--blue-l);color:var(--blue);border-radius:20px;padding:.18rem .55rem;font-weight:700;font-size:.65rem">📋 Route Logged</span>
+              </div>
+            </div>
+          </div>
 
-  <!-- Attendance toggle -->
-  <div class="attendance-area">
-    <div class="status-ring">
-      <button class="attendance-btn offline" id="attendanceBtn" onclick="toggleAttendance()">
-        <span class="btn-icon" id="btnIcon">💤</span>
-        <span class="btn-text" id="btnText">GO ONLINE</span>
-        <span class="btn-subtext" id="btnSubtext">Tap to start accepting bookings</span>
-      </button>
-    </div>
-    <div class="status-label" id="statusLabel">Currently Offline</div>
-    <div class="status-hint" id="statusHint">You're not visible to customers right now</div>
-    <div class="status-since" id="statusSince"></div>
+          <!-- SHEET 4: COMPLETE -->
+          <div class="bsheet hidden" id="sh4" style="height:370px">
+            <div class="bhandle"></div>
+            <div class="bsc">
+              <div class="stages"><div class="pip done"></div><div class="pip done"></div><div class="pip done"></div><div class="pip done"></div><div class="pip done"></div></div>
+              <div style="text-align:center;padding:.3rem 0 .8rem">
+                <div style="font-size:2.4rem">✅</div>
+                <div style="font-family:'Sora',sans-serif;font-size:1.05rem;font-weight:800;color:var(--text);margin-top:.4rem">Trip Completed!</div>
+                <div style="font-size:.76rem;color:var(--text3);margin-top:.15rem">8.4 km · 24 mins · Raipur</div>
+              </div>
+              <div class="price-card">
+                <div class="prow ptotal"><span class="plbl">Total Fare Paid</span><span class="pval">₹600</span></div>
+              </div>
+              <div class="slbl" style="text-align:center">Rate your driver</div>
+              <div class="rstars" id="starWrap">
+                <span class="rstar lit" onclick="doRate(1)">★</span><span class="rstar lit" onclick="doRate(2)">★</span><span class="rstar lit" onclick="doRate(3)">★</span><span class="rstar lit" onclick="doRate(4)">★</span><span class="rstar lit" onclick="doRate(5)">★</span>
+              </div>
+              <button class="btn-p" onclick="setState('idle')">Book Another Ride</button>
+            </div>
+          </div>
+        </div><!-- /userView -->
 
-    <!-- Today's summary tiles -->
-    <div class="today-strip">
-      <div class="today-tile">
-        <div class="tv" id="todayCheckIn">–</div>
-        <div class="tl">Today's Check-In</div>
-      </div>
-      <div class="today-tile">
-        <div class="tv" id="todayStatus">–</div>
-        <div class="tl">Status Today</div>
-      </div>
-    </div>
+        <!-- ══════════ DRIVER VIEW -->
+        <div id="driverView" class="hidden">
+          <div class="gps-bar gps-warn" id="drvGps">📍 &nbsp;Go online to enable GPS tracking</div>
+
+          <!-- Incoming ride overlay -->
+          <div class="inc-alert hidden" id="incAlert">
+            <div class="inc-card">
+              <div class="timer-ring" id="alertTRing">15</div>
+              <div style="text-align:center;margin-bottom:.9rem">
+                <div style="font-family:'Sora',sans-serif;font-size:.95rem;font-weight:800;color:var(--text)">New Ride Request!</div>
+                <div style="font-size:.76rem;color:var(--text3);margin-top:.2rem">Shankar Nagar → VIP Road · 2.4 km</div>
+              </div>
+              <div class="dcard" style="margin-bottom:.9rem">
+                <div style="font-size:1.4rem">👤</div>
+                <div class="dinfo"><div class="dname">Nihal C.</div><div class="dsub">Fare: ₹600 · Personal Driver · 3 hr</div></div>
+                <div style="font-size:.7rem;font-weight:700;color:var(--green);background:var(--green-l);border-radius:20px;padding:.2rem .55rem">★ 4.8</div>
+              </div>
+              <div style="display:flex;gap:.6rem">
+                <button class="btn-r" onclick="declineRide()">✕ &nbsp;Decline</button>
+                <button class="btn-g" onclick="acceptRide()">✓ &nbsp;Accept</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Driver bottom sheet -->
+          <div class="bsheet" id="drvSheet" style="height:auto">
+            <div class="bhandle"></div>
+            <div class="bsc">
+              <!-- IDLE CONTENT -->
+              <div id="drvIdle">
+                <div style="display:flex;flex-direction:column;align-items:center;padding:.8rem 0">
+                  <button class="otoggle offline" id="oBtn" onclick="toggleOnline()">
+                    <span style="font-size:1.8rem" id="oIco">⭕</span>
+                    <span style="font-size:.6rem;font-weight:700;margin-top:.1rem" id="oSubLabel">TAP TO START</span>
+                  </button>
+                  <div class="olbl" id="oLbl">Go Online</div>
+                </div>
+                <div class="ac-panel">
+                  <div class="ac-title">🛡️ Anti-Cheat Security</div>
+                  <div class="ac-row"><div class="ac-lbl">📍 Real Device GPS</div><div class="ac-s ac-ok" id="acGps">ACTIVE</div></div>
+                  <div class="ac-row"><div class="ac-lbl">🎭 Mock Location</div><div class="ac-s ac-ok" id="acMock">NOT DETECTED</div></div>
+                  <div class="ac-row"><div class="ac-lbl">📶 Location Access</div><div class="ac-s ac-ok" id="acPerm">GRANTED</div></div>
+                  <div class="ac-row"><div class="ac-lbl">🔄 Background Track</div><div class="ac-s ac-ok" id="acBg">ENABLED</div></div>
+                </div>
+                <div class="dstats">
+                  <div class="dstat"><div class="dstat-num" style="color:var(--green)">₹1,840</div><div class="dstat-lbl">Earnings</div></div>
+                  <div class="dstat"><div class="dstat-num" style="color:var(--blue)">6</div><div class="dstat-lbl">Trips</div></div>
+                  <div class="dstat"><div class="dstat-num" style="color:var(--amber)">4.9★</div><div class="dstat-lbl">Rating</div></div>
+                </div>
+              </div>
+              <!-- ACTIVE TRIP CONTENT -->
+              <div id="drvActive" class="hidden">
+                <div style="font-family:'Sora',sans-serif;font-size:.8rem;font-weight:700;color:var(--blue);margin-bottom:.7rem">🚗 Active Trip — GPS Locked &amp; Logging</div>
+                <div class="dcard">
+                  <div style="font-size:1.4rem">👤</div>
+                  <div class="dinfo"><div class="dname">Nihal Chandrakar</div><div class="dsub">📍 Shankar Nagar → VIP Road</div></div>
+                  <div class="ibt" onclick="alert('📞 Calling passenger')">📞</div>
+                </div>
+                <div class="ac-panel" style="margin-top:.6rem">
+                  <div class="ac-row"><div class="ac-lbl">📍 GPS Source</div><div class="ac-s ac-ok">REAL GPS ✓</div></div>
+                  <div class="ac-row"><div class="ac-lbl">🔄 Update Freq</div><div class="ac-s ac-ok" id="gpsFreq">Every 3s</div></div>
+                  <div class="ac-row"><div class="ac-lbl">🎭 Mock Detect</div><div class="ac-s ac-ok">CLEAN ✓</div></div>
+                  <div class="ac-row"><div class="ac-lbl">📋 Route Logged</div><div class="ac-s ac-ok" id="routePoints">0 points</div></div>
+                </div>
+                <div class="rlog" id="rlog" style="margin-top:.6rem"><div>Initializing GPS tracker…</div></div>
+                <div style="display:flex;gap:.6rem;margin-top:.7rem">
+                  <button class="btn-o" style="flex:1" onclick="alert('📞 Calling passenger')">📞 Call</button>
+                  <button class="btn-g" onclick="drvEndTrip()">✅ End Trip</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div><!-- /driverView -->
+
+        <!-- BOTTOM NAV -->
+        <div class="bnav" id="bnav">
+          <div class="nit active" onclick="navTap(this,0)"><div class="nico">🏠</div><div class="nlbl" id="nl0">Home</div></div>
+          <div class="nit" onclick="navTap(this,1)"><div class="nico">📅</div><div class="nlbl" id="nl1">Book</div></div>
+          <div class="nit" onclick="navTap(this,2)"><div class="nico">🗂️</div><div class="nlbl" id="nl2">Trips</div></div>
+          <div class="nit" onclick="navTap(this,3)"><div class="nico">👤</div><div class="nlbl" id="nl3">Profile</div></div>
+        </div>
+
+      </div><!-- /phone-inner -->
+    </div><!-- /phone-frame -->
   </div>
 
-  <!-- Quick actions footer -->
-  <div class="home-footer">
-    <div class="quick-actions">
-      <a href="tel:919111473929" class="qa-btn">
-        <span class="qi">📞</span><span class="ql">Call Office</span>
-      </a>
-      <a href="https://wa.me/919111473929" class="qa-btn" target="_blank">
-        <span class="qi">💬</span><span class="ql">WhatsApp</span>
-      </a>
-      <div class="qa-btn" onclick="confirmLogout()">
-        <span class="qi">🔄</span><span class="ql">Switch Account</span>
+  <!-- ════════════════ ADMIN PANEL -->
+  <div class="admin">
+    <div class="adm-hdr">
+      <div class="adm-title">📊 Admin Control Center</div>
+      <div class="adm-sub">DriveBuddy Live Platform · Raipur, Chhattisgarh</div>
+    </div>
+
+    <div class="srow">
+      <div class="scard cgreen"><div class="snum" id="aActive">7</div><div class="slb">Active Drivers</div></div>
+      <div class="scard cblue"><div class="snum" id="aRides">3</div><div class="slb">Live Rides</div></div>
+      <div class="scard camber"><div class="snum" id="aAlerts">1</div><div class="slb">Alerts</div></div>
+      <div class="scard"><div class="snum">4.9★</div><div class="slb">Avg Rating</div></div>
+    </div>
+
+    <div class="adm-actions">
+      <button class="adm-action-btn" onclick="simulateFakeGps()">⚠️ Simulate Fake GPS Alert</button>
+      <button class="adm-action-btn" onclick="simulateGpsOff()">📴 Simulate GPS Off</button>
+      <button class="adm-action-btn" onclick="triggerBookingFromAdmin()">🚗 Trigger New Booking</button>
+      <button class="adm-action-btn red" onclick="blockDriver()">🚫 Block Driver D-04</button>
+    </div>
+
+    <div class="adm-card">
+      <div class="adm-card-hdr">
+        <div class="adm-card-title">🗺️ Live Driver Map — Raipur</div>
+        <div class="chip"><div class="ldot"></div>&nbsp;<span id="aOnlineCount">7 online</span></div>
+      </div>
+      <canvas id="adminMapCanvas"></canvas>
+    </div>
+
+    <div class="adm-card" id="alertCard">
+      <div class="adm-card-hdr">
+        <div class="adm-card-title">🚨 Alert Log</div>
+        <span class="alrt-badge" id="alertBadge">1</span>
+      </div>
+      <div id="alertList">
+        <div class="ait"><div class="ait-ico">⚠️</div><div><div class="ait-title">Driver D-04: GPS lost signal (45 sec) — Auto-paused</div><div class="ait-time">2 min ago</div></div></div>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- Snack bar -->
-<div class="snack" id="snack"></div>
+    <div class="adm-card">
+      <div class="dtbl-hdr"><span style="font-family:'Sora',sans-serif;font-size:.85rem;font-weight:700">👥 Driver Roster</span></div>
+      <div class="dr-row"><div class="drav" style="background:linear-gradient(135deg,#1D4ED8,#7C3AED)">RK</div><div class="drinf"><div class="drname">Rakesh Kumar</div><div class="drsub">📍 Shankar Nagar · 2.4 km</div></div><div class="drst dr-trip" id="rkSt">On Trip</div></div>
+      <div class="dr-row"><div class="drav" style="background:linear-gradient(135deg,#059669,#0D9488)">MS</div><div class="drinf"><div class="drname">Mahesh Singh</div><div class="drsub">📍 Telibandha · Ready</div></div><div class="drst dr-online">Online</div></div>
+      <div class="dr-row"><div class="drav" style="background:linear-gradient(135deg,#D97706,#DC2626)">AP</div><div class="drinf"><div class="drname">Amit Pandey</div><div class="drsub">📍 Pandri · Ready</div></div><div class="drst dr-online">Online</div></div>
+      <div class="dr-row"><div class="drav" style="background:linear-gradient(135deg,#6366F1,#8B5CF6)">SK</div><div class="drinf"><div class="drname">Suresh Kowre</div><div class="drsub">📍 Tatibandh · Ready</div></div><div class="drst dr-online">Online</div></div>
+      <div class="dr-row"><div class="drav" style="background:linear-gradient(135deg,#0D9488,#059669)">RP</div><div class="drinf"><div class="drname">Rajesh Patel</div><div class="drsub">📍 Avanti Vihar · Ready</div></div><div class="drst dr-online">Online</div></div>
+      <div class="dr-row"><div class="drav" style="background:linear-gradient(135deg,#6B7280,#374151)">VT</div><div class="drinf"><div class="drname">Vijay Thakur</div><div class="drsub">📴 Last seen 2h ago</div></div><div class="drst dr-offline">Offline</div></div>
+      <div class="dr-row" id="d04row"><div class="drav" style="background:linear-gradient(135deg,#DC2626,#DB2777)">D4</div><div class="drinf"><div class="drname">Driver D-04</div><div class="drsub" id="d04sub">⚠️ GPS Signal Lost</div></div><div class="drst dr-alert" id="d04st">⚠️ Alert</div></div>
+    </div>
+  </div>
+</div><!-- /main -->
 
 <script>
-/* ══════════════════════════════════════════════════
-   STATE
-══════════════════════════════════════════════════ */
-let currentPhone = '';
-let driverData   = null;
-let kycStep      = 1;
-let kycCity      = '';
-let kycVehicle   = '';
-let kycServices  = [];
-let licenseUrl   = '';
-let selfieUrl    = '';
-let selfieDataURL = ''; // for avatar
-const TOTAL_STEPS = 3;
-
-/* ══════════════════════════════════════════════════
-   SCREEN NAVIGATION
-══════════════════════════════════════════════════ */
-function goTo(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  window.scrollTo(0,0);
-}
-
-/* ══════════════════════════════════════════════════
-   SNACK
-══════════════════════════════════════════════════ */
-let snackTimer;
-function showSnack(msg, type=''){
-  const s = document.getElementById('snack');
-  s.textContent = msg; s.className = 'snack visible ' + type;
-  clearTimeout(snackTimer);
-  snackTimer = setTimeout(()=>s.classList.remove('visible'), 2800);
-}
-
-/* ══════════════════════════════════════════════════
-   INIT — check localStorage for returning driver
-══════════════════════════════════════════════════ */
-window.addEventListener('DOMContentLoaded', async () => {
-  await new Promise(r => setTimeout(r, 1200)); // show loading
-  const saved = localStorage.getItem('db_phone');
-  if(saved){
-    currentPhone = saved;
-    await loadDriverAndGoHome(saved);
-  } else {
-    goTo('s-welcome');
-  }
-});
-
-async function loadDriverAndGoHome(phone){
-  try {
-    const snap = await db.ref('drivers/' + phone).once('value');
-    if(snap.exists()){
-      driverData = snap.val();
-      populateHomeScreen(driverData);
-      goTo('s-home');
-      listenForStatusChanges(phone);
-    } else {
-      localStorage.removeItem('db_phone');
-      goTo('s-welcome');
-    }
-  } catch(e){
-    goTo('s-welcome');
-    showSnack('Connection error. Check internet.','err');
-  }
-}
-
-/* ══════════════════════════════════════════════════
-   PHONE SUBMIT
-══════════════════════════════════════════════════ */
-async function handlePhoneSubmit(){
-  const phone = document.getElementById('phoneInput').value.trim();
-  const err   = document.getElementById('phoneErr');
-  if(!/^\d{10}$/.test(phone)){
-    err.style.display = 'block';
-    document.getElementById('phoneInput').style.borderColor = 'var(--red)';
-    return;
-  }
-  err.style.display = 'none';
-  document.getElementById('phoneInput').style.borderColor = '';
-
-  const btn = document.getElementById('phoneBtn');
-  btn.disabled = true;
-  btn.textContent = 'Checking…';
-
-  try {
-    const snap = await db.ref('drivers/' + phone).once('value');
-    currentPhone = phone;
-    if(snap.exists()){
-      localStorage.setItem('db_phone', phone);
-      driverData = snap.val();
-      populateHomeScreen(driverData);
-      listenForStatusChanges(phone);
-      goTo('s-home');
-    } else {
-      // New driver — start KYC
-      localStorage.setItem('db_phone', phone);
-      initKYC();
-      goTo('s-kyc');
-    }
-  } catch(e){
-    showSnack('Failed to connect. Try again.','err');
-  }
-  btn.disabled = false;
-  btn.textContent = 'Continue →';
-}
-
-/* ══════════════════════════════════════════════════
-   KYC FLOW
-══════════════════════════════════════════════════ */
-function initKYC(){
-  kycStep = 1;
-  kycCity = ''; kycVehicle = ''; kycServices = [];
-  licenseUrl = ''; selfieUrl = ''; selfieDataURL = '';
-  showKYCStep(1);
-}
-
-function showKYCStep(n){
-  for(let i=1;i<=TOTAL_STEPS;i++){
-    document.getElementById('kyc-step-'+i).classList.toggle('active', i===n);
-    const ps = document.getElementById('ps-'+i);
-    if(i < n) ps.className = 'progress-step done';
-    else if(i === n) ps.className = 'progress-step active';
-    else ps.className = 'progress-step';
-  }
-  document.getElementById('progressLabel').textContent = `Step ${n} / ${TOTAL_STEPS}`;
-  document.getElementById('kycPrevBtn').style.display = n > 1 ? 'block' : 'none';
-  document.getElementById('kycNextBtn').textContent = n === TOTAL_STEPS ? 'Submit KYC ✓' : 'Next →';
-}
-
-function kycBack(){ if(kycStep > 1){ kycStep--; showKYCStep(kycStep); } else goTo('s-phone'); }
-function kycPrev(){ if(kycStep > 1){ kycStep--; showKYCStep(kycStep); } }
-
-function kycNext(){
-  if(kycStep === 1){
-    const name = document.getElementById('k_name').value.trim();
-    const exp  = document.getElementById('k_exp').value;
-    if(!name){ showSnack('Please enter your full name','err'); return; }
-    if(!kycCity){ showSnack('Please select your city','err'); return; }
-    if(!exp){ showSnack('Please enter your years of experience','err'); return; }
-    kycStep = 2; showKYCStep(2);
-
-  } else if(kycStep === 2){
-    if(!kycVehicle){ showSnack('Please select your vehicle type','err'); return; }
-    if(kycServices.length === 0){ showSnack('Select at least one service you can do','err'); return; }
-    kycStep = 3; showKYCStep(3);
-
-  } else if(kycStep === 3){
-    submitKYC();
-  }
-}
-
-function selectCity(el, city){
-  kycCity = city;
-  document.querySelectorAll('.city-option').forEach(o=>o.classList.remove('selected'));
-  el.classList.add('selected');
-}
-
-function selectVehicle(el, v){
-  kycVehicle = v;
-  document.querySelectorAll('.vehicle-option').forEach(o=>o.classList.remove('selected'));
-  el.classList.add('selected');
-}
-
-function toggleService(cb){
-  const val = cb.value;
-  const label = cb.closest('label');
-  if(cb.checked){
-    if(!kycServices.includes(val)) kycServices.push(val);
-    label.style.borderColor = 'var(--gold-rim)';
-    label.style.background  = 'var(--gold-dim)';
-  } else {
-    kycServices = kycServices.filter(s=>s!==val);
-    label.style.borderColor = 'var(--border2)';
-    label.style.background  = 'var(--surface2)';
-  }
-}
-
-/* Photo upload */
-function handleFileSelect(type, input){
-  const file = input.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const preview = document.getElementById(type+'Preview');
-    preview.src = e.target.result;
-    preview.style.display = 'block';
-    document.getElementById(type+'Icon').style.display = 'none';
-    document.getElementById(type+'Label').textContent = '✓ ' + file.name.substring(0,20);
-    document.getElementById(type+'UploadArea').classList.add('has-file');
-    if(type === 'selfie') selfieDataURL = e.target.result;
+// ══════════════════════════════════════════════════ POLYFILL
+if(!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+    this.beginPath();this.moveTo(x+r,y);this.lineTo(x+w-r,y);
+    this.quadraticCurveTo(x+w,y,x+w,y+r);this.lineTo(x+w,y+h-r);
+    this.quadraticCurveTo(x+w,y+h,x+w-r,y+h);this.lineTo(x+r,y+h);
+    this.quadraticCurveTo(x,y+h,x,y+h-r);this.lineTo(x,y+r);
+    this.quadraticCurveTo(x,y,x+r,y);this.closePath();return this;
   };
-  reader.readAsDataURL(file);
 }
 
-/* Submit KYC to Firebase */
-async function submitKYC(){
-  const licenseFile = document.getElementById('licenseFile').files[0];
-  const selfieFile  = document.getElementById('selfieFile').files[0];
+// ══════════════════════════════════════════════════ STATE
+let appMode='user', rideState='idle', driverOnline=false, driverRideState='idle';
+let alertCount=1, rlogCount=0, routePts=0;
+let tripProgress=0, tripInterval=null, alertTimerInt=null, rlogInterval=null;
+let mapZoom=1;
 
-  if(!licenseFile){ showSnack('Please upload your ID proof','err'); return; }
-  if(!selfieFile) { showSnack('Please upload your selfie','err');   return; }
+const userP={x:.45,y:.53};
+const pickupP={x:.45,y:.53};
+const dropP={x:.73,y:.32};
+let driverP={x:.2,y:.38};
+let driverMoving=false, driverMoveInt=null;
 
-  const btn = document.getElementById('kycNextBtn');
-  btn.disabled = true; btn.textContent = 'Uploading…';
+// ══════════════════════════════════════════════════ CANVAS
+const mc=document.getElementById('mapCanvas'), mctx=mc.getContext('2d');
+const ac=document.getElementById('adminMapCanvas'), actx=ac.getContext('2d');
 
-  try {
-    /* Upload license */
-    document.getElementById('licenseBar').style.display='block';
-    const licRef  = storage.ref(`kyc/${currentPhone}/license_${Date.now()}`);
-    const licTask = licRef.put(licenseFile);
-    await new Promise((res,rej) => {
-      licTask.on('state_changed',
-        snap => {
-          const pct = (snap.bytesTransferred/snap.totalBytes)*100;
-          document.getElementById('licenseBarFill').style.width = pct+'%';
-        },
-        rej, res
-      );
-    });
-    licenseUrl = await licRef.getDownloadURL();
+const admDrivers=[
+  {x:.28,y:.32,c:'#1D4ED8',l:'RK',s:'trip'},
+  {x:.62,y:.45,c:'#059669',l:'MS',s:'online'},
+  {x:.5,y:.68,c:'#D97706',l:'AP',s:'online'},
+  {x:.76,y:.56,c:'#6366F1',l:'SK',s:'online'},
+  {x:.38,y:.82,c:'#0D9488',l:'RP',s:'online'},
+  {x:.79,y:.25,c:'#374151',l:'VT',s:'offline'},
+  {x:.18,y:.72,c:'#DC2626',l:'D4',s:'alert'},
+];
 
-    /* Upload selfie */
-    document.getElementById('selfieBar').style.display='block';
-    btn.textContent = 'Uploading selfie…';
-    const selfRef  = storage.ref(`kyc/${currentPhone}/selfie_${Date.now()}`);
-    const selfTask = selfRef.put(selfieFile);
-    await new Promise((res,rej) => {
-      selfTask.on('state_changed',
-        snap => {
-          const pct = (snap.bytesTransferred/snap.totalBytes)*100;
-          document.getElementById('selfieBarFill').style.width = pct+'%';
-        },
-        rej, res
-      );
-    });
-    selfieUrl = await selfRef.getDownloadURL();
-
-    btn.textContent = 'Saving profile…';
-
-    /* Save to Realtime DB */
-    const profile = {
-      name:        document.getElementById('k_name').value.trim(),
-      phone:       currentPhone,
-      city:        kycCity,
-      experience:  parseInt(document.getElementById('k_exp').value) || 0,
-      licenseNo:   document.getElementById('k_license').value.trim().toUpperCase() || null,
-      vehicleType: kycVehicle,
-      vehicleName: document.getElementById('k_vehicle_name').value.trim() || null,
-      services:    kycServices,
-      licenseUrl,
-      selfieUrl,
-      status:      'offline',
-      kycDone:     true,
-      kycStatus:   'pending', // admin can set to 'approved'
-      rating:      4.9,
-      joinedAt:    Date.now(),
-      lastSeen:    Date.now(),
-    };
-
-    await db.ref('drivers/' + currentPhone).set(profile);
-    driverData = profile;
-
-    /* Show submitted screen */
-    document.getElementById('submittedInfo').innerHTML = `
-      <div class="si-row"><span class="si-label">Name</span><span class="si-value">${profile.name}</span></div>
-      <div class="si-row"><span class="si-label">Phone</span><span class="si-value">+91 ${profile.phone}</span></div>
-      <div class="si-row"><span class="si-label">City</span><span class="si-value">${profile.city}</span></div>
-      <div class="si-row"><span class="si-label">Vehicle</span><span class="si-value">${profile.vehicleType}</span></div>
-      <div class="si-row"><span class="si-label">KYC Status</span><span class="si-value" style="color:var(--amber)">⏳ Pending Review</span></div>
-    `;
-    goTo('s-submitted');
-
-  } catch(e) {
-    console.error(e);
-    showSnack('Upload failed. Check internet & try again.','err');
-  }
-
-  btn.disabled = false; btn.textContent = 'Submit KYC ✓';
+function resizeAll(){
+  const pi=mc.parentElement;
+  mc.width=pi.clientWidth; mc.height=pi.clientHeight;
+  const ap=ac.parentElement;
+  ac.width=ap.clientWidth; ac.height=210;
 }
 
-/* ══════════════════════════════════════════════════
-   HOME SCREEN
-══════════════════════════════════════════════════ */
-function populateHomeScreen(d){
-  /* Avatar */
-  const avatarEl = document.getElementById('profileAvatar');
-  if(d.selfieUrl){
-    avatarEl.innerHTML = `<img src="${d.selfieUrl}" alt="selfie">`;
-  } else {
-    const initials = (d.name||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
-    avatarEl.textContent = initials;
-  }
-  document.getElementById('profileName').textContent = d.name || 'Driver';
-  document.getElementById('profileCity').textContent = '📍 ' + (d.city || '–');
-  document.getElementById('profileExp').textContent  = '🕐 ' + (d.experience||'–') + ' yrs';
-  if(d.services && d.services.length){
-    document.getElementById('profileServices').textContent = '✓ ' + d.services.length + ' services';
-  }
+function drawMap(ctx,W,H){
+  // Base
+  ctx.fillStyle='#F2EFE9'; ctx.fillRect(0,0,W,H);
 
-  /* Date badge */
-  document.getElementById('homeDateBadge').textContent =
-    new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+  // Water
+  ctx.fillStyle='#B8D8F0';
+  ctx.beginPath(); ctx.ellipse(.82*W,.78*H,.09*W,.06*H,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#C9E0F5';
+  ctx.beginPath(); ctx.ellipse(.82*W,.78*H,.06*W,.04*H,0,0,Math.PI*2); ctx.fill();
 
-  /* Today tiles */
-  const todayKey = new Date().toISOString().slice(0,10);
-  const checkin  = d.attendance && d.attendance[todayKey] ? d.attendance[todayKey].checkin : null;
-  document.getElementById('todayCheckIn').textContent = checkin
-    ? new Date(checkin).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})
-    : '–';
+  // Park
+  ctx.fillStyle='#C5E1C5';
+  ctx.fillRect(.57*W,.04*H,.11*W,.13*H);
+  ctx.fillStyle='#A8D4A8';
+  ctx.beginPath(); ctx.arc(.625*W,.105*H,.04*W,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#8FC88F';
+  ctx.beginPath(); ctx.arc(.6*W,.09*H,.02*W,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(.65*W,.12*H,.018*W,0,Math.PI*2); ctx.fill();
 
-  /* Status */
-  applyStatus(d.status || 'offline', d.statusSince);
+  // City blocks
+  const blocks=[
+    [.04,.04,.17,.18,'#EAE6DE'],[.26,.04,.14,.13,'#EDE9E2'],[.45,.04,.1,.12,'#E7E3DB'],
+    [.73,.04,.24,.18,'#EBE7E0'],[.04,.26,.11,.19,'#E9E5DD'],[.2,.26,.17,.17,'#ECE8E1'],
+    [.44,.22,.11,.13,'#E6E2DB'],[.6,.26,.15,.17,'#EAE6DF'],[.79,.26,.17,.2,'#E7E3DC'],
+    [.04,.5,.14,.19,'#EBE7E0'],[.23,.49,.19,.17,'#E5E1D9'],[.48,.47,.17,.19,'#ECE8E1'],
+    [.71,.5,.14,.17,'#E8E4DD'],[.89,.5,.09,.14,'#EAE6DF'],[.04,.74,.27,.19,'#E6E2DB'],
+    [.37,.72,.21,.22,'#ECE9E2'],[.63,.72,.14,.22,'#E9E5DE'],
+  ];
+  blocks.forEach(([x,y,w,h,c])=>{
+    ctx.fillStyle=c; ctx.fillRect(x*W,y*H,w*W,h*H);
+  });
+
+  // Major roads
+  const majH=[.23,.46,.71], majV=[.2,.43,.67];
+  majH.forEach(y=>{
+    ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,y*H-5,W,11);
+    ctx.strokeStyle='#E0DDD7'; ctx.lineWidth=.6; ctx.setLineDash([10,8]);
+    ctx.beginPath(); ctx.moveTo(0,y*H); ctx.lineTo(W,y*H); ctx.stroke(); ctx.setLineDash([]);
+  });
+  majV.forEach(x=>{
+    ctx.fillStyle='#FFFFFF'; ctx.fillRect(x*W-5,0,11,H);
+    ctx.strokeStyle='#E0DDD7'; ctx.lineWidth=.6; ctx.setLineDash([10,8]);
+    ctx.beginPath(); ctx.moveTo(x*W,0); ctx.lineTo(x*W,H); ctx.stroke(); ctx.setLineDash([]);
+  });
+
+  // Minor roads
+  ctx.strokeStyle='#E8E4DE'; ctx.lineWidth=3; ctx.setLineDash([]);
+  [[0,.14,1,.14],[0,.36,1,.36],[0,.59,1,.59],[0,.85,1,.85],
+   [.1,0,.1,1],[.31,0,.31,1],[.55,0,.55,1],[.78,0,.78,1]].forEach(([x1,y1,x2,y2])=>{
+    ctx.beginPath(); ctx.moveTo(x1*W,y1*H); ctx.lineTo(x2*W,y2*H); ctx.stroke();
+  });
+
+  // Road labels
+  ctx.fillStyle='#B0ABA2'; ctx.font=`${Math.max(7,W*.022)}px DM Sans,sans-serif`;
+  ctx.fillText('Shankar Nagar Rd',.04*W,.22*H);
+  ctx.fillText('VIP Road',.04*W,.44*H);
+  ctx.fillText('Pandri Rd',.04*W,.69*H);
+  ctx.fillText('Ring Rd',.22*W,.13*H);
+  ctx.fillText('🌳 Shaheed Smarak Park',.575*W,.16*H);
 }
 
-function applyStatus(status, since){
-  const btn       = document.getElementById('attendanceBtn');
-  const icon      = document.getElementById('btnIcon');
-  const text      = document.getElementById('btnText');
-  const subtext   = document.getElementById('btnSubtext');
-  const label     = document.getElementById('statusLabel');
-  const hint      = document.getElementById('statusHint');
-  const sinceEl   = document.getElementById('statusSince');
-  const tile      = document.getElementById('todayStatus');
-  const bgGlow    = document.getElementById('homeBgGlow');
-
-  if(status === 'available'){
-    btn.className   = 'attendance-btn available';
-    icon.textContent= '✅';
-    text.textContent= 'I\'M AVAILABLE';
-    subtext.textContent='Tap to go offline';
-    label.textContent  = 'You\'re Online';
-    hint.textContent   = 'Customers can be assigned to you';
-    tile.textContent   = '🟢 Online';
-    tile.style.color   = 'var(--green)';
-    bgGlow.className   = 'home-bg-glow home-glow-available';
-  } else {
-    btn.className   = 'attendance-btn offline';
-    icon.textContent= '💤';
-    text.textContent= 'GO ONLINE';
-    subtext.textContent='Tap to start accepting bookings';
-    label.textContent  = 'Currently Offline';
-    hint.textContent   = 'You\'re not visible to customers right now';
-    tile.textContent   = '⚫ Offline';
-    tile.style.color   = 'var(--cream60)';
-    bgGlow.className   = 'home-bg-glow home-glow-offline';
-  }
-
-  if(since){
-    const diff = Date.now() - since;
-    const hrs  = Math.floor(diff/3600000);
-    const mins = Math.floor((diff%3600000)/60000);
-    sinceEl.textContent = status==='available'
-      ? `Online for ${hrs>0?hrs+'h ':''} ${mins}m`
-      : `Offline since ${new Date(since).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}`;
-  } else {
-    sinceEl.textContent = '';
-  }
+function drawUserMarker(ctx,x,y,W,H){
+  const px=x*W,py=y*H,t=Date.now();
+  const r=12+4*Math.sin(t/450);
+  ctx.beginPath(); ctx.arc(px,py,r,0,Math.PI*2);
+  ctx.fillStyle='rgba(29,78,216,.12)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(px,py+2,8,0,Math.PI*2);
+  ctx.fillStyle='rgba(0,0,0,.18)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(px,py,9,0,Math.PI*2);
+  ctx.fillStyle='#1D4ED8'; ctx.fill();
+  ctx.strokeStyle='white'; ctx.lineWidth=2.5; ctx.stroke();
+  ctx.beginPath(); ctx.arc(px,py,3.5,0,Math.PI*2);
+  ctx.fillStyle='white'; ctx.fill();
 }
 
-async function toggleAttendance(){
-  if(!currentPhone) return;
-  const btn = document.getElementById('attendanceBtn');
-  btn.style.opacity = '0.6';
-  btn.style.pointerEvents = 'none';
+function drawCarMarker(ctx,x,y,W,H,col='#1D4ED8'){
+  const px=x*W,py=y*H;
+  ctx.save(); ctx.translate(px,py);
+  ctx.beginPath(); ctx.ellipse(0,4,9,4.5,0,0,Math.PI*2);
+  ctx.fillStyle='rgba(0,0,0,.22)'; ctx.fill();
+  ctx.beginPath(); ctx.roundRect(-10,-7,20,14,4);
+  ctx.fillStyle=col; ctx.fill();
+  ctx.beginPath(); ctx.roundRect(-7,-5,14,7,2);
+  ctx.fillStyle='rgba(255,255,255,.72)'; ctx.fill();
+  ctx.fillStyle='#222';
+  [[-7,7],[7,7],[-7,-7],[7,-7]].forEach(([wx,wy])=>{
+    ctx.beginPath(); ctx.arc(wx,wy,2.5,0,Math.PI*2); ctx.fill();
+  });
+  ctx.restore();
+}
 
-  const currentStatus = driverData?.status || 'offline';
-  const newStatus     = currentStatus === 'available' ? 'offline' : 'available';
-  const now           = Date.now();
-  const todayKey      = new Date().toISOString().slice(0,10);
+function drawPin(ctx,x,y,W,H,col,label=''){
+  const px=x*W,py=y*H;
+  ctx.save(); ctx.translate(px,py);
+  ctx.shadowColor='rgba(0,0,0,.25)'; ctx.shadowBlur=8; ctx.shadowOffsetY=3;
+  ctx.beginPath(); ctx.arc(0,-17,10,0,Math.PI*2);
+  ctx.fillStyle=col; ctx.fill();
+  ctx.strokeStyle='white'; ctx.lineWidth=2.5; ctx.stroke();
+  ctx.shadowBlur=0; ctx.shadowOffsetY=0;
+  ctx.beginPath(); ctx.moveTo(-6,-10); ctx.lineTo(0,0); ctx.lineTo(6,-10);
+  ctx.fillStyle=col; ctx.fill();
+  ctx.beginPath(); ctx.arc(0,-17,3.5,0,Math.PI*2);
+  ctx.fillStyle='white'; ctx.fill();
+  if(label){
+    ctx.fillStyle='white'; ctx.font='bold 7px Sora,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(label,0,-15);
+  }
+  ctx.restore();
+}
 
-  const updates = {
-    status:      newStatus,
-    statusSince: now,
-    lastSeen:    now,
-  };
+function drawRoute(ctx,x1,y1,x2,y2,W,H,col,progress=1){
+  const p1x=x1*W,p1y=y1*H,p2x=x2*W,p2y=y2*H;
+  const ex=p1x+(p2x-p1x)*progress, ey=p1y+(p2y-p1y)*progress;
+  ctx.beginPath(); ctx.moveTo(p1x,p1y); ctx.lineTo(ex,ey);
+  ctx.strokeStyle=col+'44'; ctx.lineWidth=6; ctx.lineCap='round'; ctx.setLineDash([]); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(p1x,p1y); ctx.lineTo(ex,ey);
+  ctx.strokeStyle=col; ctx.lineWidth=3;
+  ctx.setLineDash([9,7]); ctx.lineDashOffset=-(Date.now()/100%16);
+  ctx.stroke(); ctx.setLineDash([]);
+}
 
-  /* Record first check-in of the day */
-  if(newStatus === 'available'){
-    const snap = await db.ref(`drivers/${currentPhone}/attendance/${todayKey}/checkin`).once('value');
-    if(!snap.exists()){
-      updates[`attendance/${todayKey}/checkin`] = now;
+function drawLabel(ctx,x,y,W,H,txt){
+  const px=x*W,py=y*H;
+  ctx.save(); ctx.font='bold 11px DM Sans,sans-serif';
+  const tw=ctx.measureText(txt).width+16;
+  ctx.fillStyle='rgba(29,78,216,.92)';
+  ctx.roundRect(px-tw/2,py-28,tw,22,5); ctx.fill();
+  ctx.fillStyle='white'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(txt,px,py-17); ctx.restore();
+}
+
+function renderMap(){
+  const W=mc.width,H=mc.height;
+  mctx.clearRect(0,0,W,H);
+  drawMap(mctx,W,H);
+
+  if(rideState==='idle'){
+    drawUserMarker(mctx,userP.x,userP.y,W,H);
+  } else if(rideState==='searching'){
+    drawUserMarker(mctx,userP.x,userP.y,W,H);
+  } else if(rideState==='assigned'){
+    drawRoute(mctx,driverP.x,driverP.y,pickupP.x,pickupP.y,W,H,'#1D4ED8',1);
+    drawPin(mctx,pickupP.x,pickupP.y,W,H,'#DC2626');
+    drawUserMarker(mctx,userP.x,userP.y,W,H);
+    drawCarMarker(mctx,driverP.x,driverP.y,W,H);
+    const d=Math.hypot(driverP.x-pickupP.x,driverP.y-pickupP.y);
+    const km=(d*12).toFixed(1), eta=Math.max(1,Math.ceil(d*80));
+    drawLabel(mctx,(driverP.x+pickupP.x)/2,(driverP.y+pickupP.y)/2,W,H,`${km} km · ${eta} min ETA`);
+    document.getElementById('etaMinV').textContent=eta;
+    document.getElementById('etaDistV').textContent=km;
+    document.getElementById('etaMin').textContent=`${eta}`;
+  } else if(rideState==='trip'){
+    const tx=pickupP.x+(dropP.x-pickupP.x)*tripProgress;
+    const ty=pickupP.y+(dropP.y-pickupP.y)*tripProgress;
+    drawRoute(mctx,pickupP.x,pickupP.y,dropP.x,dropP.y,W,H,'#059669',tripProgress);
+    drawPin(mctx,pickupP.x,pickupP.y,W,H,'#6B7280');
+    drawPin(mctx,dropP.x,dropP.y,W,H,'#059669');
+    drawCarMarker(mctx,tx,ty,W,H,'#059669');
+    const rem=1-tripProgress;
+    const remKm=(rem*8.4).toFixed(1),remEta=Math.max(1,Math.ceil(rem*24));
+    if(tripProgress>.05) drawLabel(mctx,tx,ty-.07,W,H,`${remKm} km left · ${remEta} min`);
+    document.getElementById('tEta').textContent=remEta;
+    document.getElementById('tDist').textContent=((tripProgress*8.4)).toFixed(1);
+    document.getElementById('tSpeed').textContent=(22+Math.random()*18|0);
+  } else if(rideState==='complete'){
+    drawRoute(mctx,pickupP.x,pickupP.y,dropP.x,dropP.y,W,H,'#059669',1);
+    drawPin(mctx,pickupP.x,pickupP.y,W,H,'#6B7280');
+    drawPin(mctx,dropP.x,dropP.y,W,H,'#059669');
+    drawCarMarker(mctx,dropP.x,dropP.y,W,H,'#059669');
+  }
+
+  // Driver view overlay
+  if(appMode==='driver' && driverOnline){
+    drawCarMarker(mctx,driverP.x,driverP.y,W,H,'#059669');
+    if(driverRideState==='accepted'||driverRideState==='trip'){
+      drawPin(mctx,pickupP.x,pickupP.y,W,H,'#DC2626');
     }
-    updates[`attendance/${todayKey}/lastOnline`] = now;
   }
-
-  try {
-    await db.ref('drivers/' + currentPhone).update(updates);
-    if(driverData) driverData.status = newStatus;
-    applyStatus(newStatus, now);
-
-    /* Update today's check-in display */
-    if(newStatus === 'available'){
-      const snap2 = await db.ref(`drivers/${currentPhone}/attendance/${todayKey}/checkin`).once('value');
-      if(snap2.exists()){
-        document.getElementById('todayCheckIn').textContent =
-          new Date(snap2.val()).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
-      }
-    }
-    showSnack(newStatus==='available' ? '✓ You\'re now Online!' : '✓ You\'re now Offline', newStatus==='available'?'ok':'');
-  } catch(e){
-    showSnack('Failed to update. Try again.','err');
-  }
-
-  btn.style.opacity = '1';
-  btn.style.pointerEvents = 'auto';
 }
 
-/* Real-time listener so status syncs across devices */
-function listenForStatusChanges(phone){
-  db.ref('drivers/' + phone).on('value', snap => {
-    if(snap.exists()){
-      const d = snap.val();
-      driverData = d;
-      applyStatus(d.status || 'offline', d.statusSince);
-    }
+function renderAdminMap(){
+  const W=ac.width,H=ac.height;
+  if(!W||!H) return;
+  actx.clearRect(0,0,W,H);
+  drawMap(actx,W,H);
+  admDrivers.forEach(d=>{
+    const dx=d.x+.008*Math.sin(Date.now()/2200+d.x*10);
+    const dy=d.y+.008*Math.cos(Date.now()/1700+d.y*10);
+    const col=d.s==='offline'?'#9CA3AF':d.s==='alert'?'#DC2626':d.c;
+    drawCarMarker(actx,dx,dy,W,H,col);
+    actx.fillStyle='rgba(0,0,0,.65)'; actx.font='7px Sora,sans-serif'; actx.textAlign='center';
+    actx.fillText(d.l,dx*W,dy*H+18);
   });
 }
 
-function confirmLogout(){
-  if(confirm('Switch to a different driver account?')){
-    localStorage.removeItem('db_phone');
-    db.ref('drivers/' + currentPhone).off();
-    location.reload();
+function loop(){renderMap();renderAdminMap();requestAnimationFrame(loop);}
+
+// ══════════════════════════════════════════════════ STATE MACHINE
+function showSheet(id){
+  ['sh0','sh1','sh2','sh3','sh4'].forEach(s=>document.getElementById(s).classList.add('hidden'));
+  if(id) document.getElementById(id).classList.remove('hidden');
+}
+
+function setState(s){
+  rideState=s;
+  switch(s){
+    case 'idle':
+      showSheet('sh0');
+      document.getElementById('searchFloat').classList.remove('hidden');
+      document.getElementById('mapCtrl').classList.remove('hidden');
+      stopDriverMove(); stopTripInterval(); stopRlog();
+      driverP={x:.2,y:.38}; tripProgress=0;
+      break;
+    case 'searching':
+      showSheet('sh1');
+      document.getElementById('searchFloat').classList.add('hidden');
+      document.getElementById('mapCtrl').classList.add('hidden');
+      setTimeout(()=>{ if(rideState==='searching') setState('assigned'); }, 4000);
+      break;
+    case 'assigned':
+      showSheet('sh2');
+      document.getElementById('rkSt').textContent='On Trip';
+      document.getElementById('rkSt').className='drst dr-trip';
+      startDriverMove(pickupP, ()=>{ setState('trip'); });
+      addAlert('🚗 Booking confirmed — Driver RK dispatched to Shankar Nagar','just now');
+      // If driver view is open and driver is online, show incoming
+      if(driverOnline && driverRideState==='idle') setTimeout(()=>showIncoming(), 800);
+      break;
+    case 'trip':
+      showSheet('sh3');
+      tripProgress=0;
+      startTripInterval();
+      startRlog();
+      break;
+    case 'complete':
+      showSheet('sh4');
+      stopTripInterval(); stopRlog();
+      addAlert('✅ Trip complete — RK · Nihal · 8.4 km · ₹600','just now');
+      document.getElementById('rkSt').textContent='Online';
+      document.getElementById('rkSt').className='drst dr-online';
+      break;
   }
 }
+
+function startDriverMove(target, onArrival){
+  stopDriverMove();
+  driverMoving=true;
+  driverMoveInt=setInterval(()=>{
+    const dx=target.x-driverP.x, dy=target.y-driverP.y;
+    const d=Math.hypot(dx,dy);
+    if(d<.012){ driverP={...target}; stopDriverMove(); if(onArrival) onArrival(); }
+    else{ const sp=.005; driverP.x+=dx/d*sp; driverP.y+=dy/d*sp; }
+  },100);
+}
+function stopDriverMove(){ if(driverMoveInt){ clearInterval(driverMoveInt); driverMoveInt=null; } driverMoving=false; }
+
+function startTripInterval(){
+  stopTripInterval();
+  tripInterval=setInterval(()=>{
+    tripProgress=Math.min(1, tripProgress+.015);
+    if(tripProgress>=1){ stopTripInterval(); setTimeout(()=>setState('complete'),800); }
+  }, 200);
+}
+function stopTripInterval(){ if(tripInterval){ clearInterval(tripInterval); tripInterval=null; } }
+
+const GPS_COORDS=[
+  ['21.2512','81.6292'],['21.2519','81.6311'],['21.2533','81.6329'],
+  ['21.2548','81.6348'],['21.2561','81.6366'],['21.2577','81.6385'],
+  ['21.2591','81.6401'],['21.2605','81.6418'],['21.2618','81.6432'],
+];
+function startRlog(){
+  stopRlog(); rlogCount=0; routePts=0;
+  const log=document.getElementById('rlog');
+  log.innerHTML='<div>GPS tracker initialized…</div>';
+  rlogInterval=setInterval(()=>{
+    const c=GPS_COORDS[rlogCount%GPS_COORDS.length];
+    const now=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const div=document.createElement('div');
+    div.textContent=`[${now}] ${c[0]}°N, ${c[1]}°E · Verified ✓`;
+    log.appendChild(div); log.scrollTop=log.scrollHeight;
+    rlogCount++; routePts++;
+    document.getElementById('routePoints').textContent=`${routePts} pts`;
+    document.getElementById('gpsFreq').textContent=`Every 3s`;
+  }, 2500);
+}
+function stopRlog(){ if(rlogInterval){ clearInterval(rlogInterval); rlogInterval=null; } }
+
+// ══════════════════════════════════════════════════ USER ACTIONS
+function startBooking(){ setState('searching'); }
+function pickSrv(el){
+  document.querySelectorAll('.stile').forEach(t=>{ t.className='stile stile-inactive'; });
+  el.className='stile stile-active';
+}
+function doZoom(f){ mapZoom=Math.max(.5,Math.min(3,mapZoom*f)); }
+function centerMap(){}
+function doRate(n){ document.querySelectorAll('.rstar').forEach((s,i)=>s.classList.toggle('lit',i<n)); }
+function navTap(el,i){
+  document.querySelectorAll('.nit').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  if(i===1 && appMode==='user') startBooking();
+}
+
+// ══════════════════════════════════════════════════ DRIVER ACTIONS
+function toggleOnline(){
+  driverOnline=!driverOnline;
+  const btn=document.getElementById('oBtn');
+  const lbl=document.getElementById('oLbl');
+  const ico=document.getElementById('oIco');
+  const sub=document.getElementById('oSubLabel');
+  const gps=document.getElementById('drvGps');
+  if(driverOnline){
+    btn.className='otoggle online'; ico.textContent='🟢'; lbl.textContent='Online — Ready'; sub.textContent='TAP TO PAUSE';
+    gps.className='gps-bar gps-ok'; gps.textContent='📍  GPS Active · Real location · Tracking ON';
+    if(rideState==='assigned'||rideState==='searching') setTimeout(showIncoming,1500);
+  } else {
+    btn.className='otoggle offline'; ico.textContent='⭕'; lbl.textContent='Go Online'; sub.textContent='TAP TO START';
+    gps.className='gps-bar gps-warn'; gps.textContent='📍  GPS Paused — Go online to enable tracking';
+  }
+}
+
+function showIncoming(){
+  if(!driverOnline || driverRideState!=='idle') return;
+  document.getElementById('incAlert').classList.remove('hidden');
+  let count=15;
+  document.getElementById('alertTRing').textContent=count;
+  document.getElementById('alertTRing').className='timer-ring';
+  if(alertTimerInt) clearInterval(alertTimerInt);
+  alertTimerInt=setInterval(()=>{
+    count--;
+    document.getElementById('alertTRing').textContent=count;
+    if(count<=5) document.getElementById('alertTRing').className='timer-ring urgent';
+    if(count<=0){ clearInterval(alertTimerInt); declineRide(); }
+  },1000);
+}
+
+function acceptRide(){
+  clearInterval(alertTimerInt);
+  document.getElementById('incAlert').classList.add('hidden');
+  document.getElementById('drvIdle').classList.add('hidden');
+  document.getElementById('drvActive').classList.remove('hidden');
+  driverRideState='accepted';
+  if(rideState==='searching') setState('assigned');
+}
+
+function declineRide(){
+  clearInterval(alertTimerInt);
+  document.getElementById('incAlert').classList.add('hidden');
+}
+
+function drvEndTrip(){
+  document.getElementById('drvIdle').classList.remove('hidden');
+  document.getElementById('drvActive').classList.add('hidden');
+  driverRideState='idle'; stopRlog();
+  if(rideState!=='complete') setState('complete');
+}
+
+// ══════════════════════════════════════════════════ VIEW SWITCH
+function setView(mode,btn){
+  appMode=mode;
+  document.querySelectorAll('.mtab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('userView').classList.toggle('hidden', mode==='driver');
+  document.getElementById('driverView').classList.toggle('hidden', mode==='user');
+  const navLabels=[
+    mode==='user'?['Home','Book','Trips','Profile']:['Map','Trips','Earn','Profile'],
+    mode==='user'?['🏠','📅','🗂️','👤']:['🗺️','📋','💰','👤'],
+  ];
+  for(let i=0;i<4;i++){
+    document.getElementById(`nl${i}`).textContent=navLabels[0][i];
+    document.querySelector(`.bnav .nit:nth-child(${i+1}) .nico`).textContent=navLabels[1][i];
+  }
+}
+
+// ══════════════════════════════════════════════════ ADMIN ACTIONS
+function addAlert(title,time,icon='🚨'){
+  alertCount++;
+  document.getElementById('alertBadge').textContent=alertCount;
+  document.getElementById('aAlerts').textContent=alertCount;
+  const list=document.getElementById('alertList');
+  const div=document.createElement('div'); div.className='ait';
+  div.innerHTML=`<div class="ait-ico">${icon}</div><div><div class="ait-title">${title}</div><div class="ait-time">${time}</div></div>`;
+  list.insertBefore(div,list.firstChild);
+  while(list.children.length>8) list.removeChild(list.lastChild);
+}
+
+function simulateFakeGps(){
+  addAlert('🎭 ANTI-CHEAT: Fake GPS detected — Driver D-04 blocked','just now','🚨');
+  document.getElementById('d04st').textContent='🚫 Blocked';
+  document.getElementById('d04st').className='drst dr-alert';
+  document.getElementById('d04sub').textContent='🚫 Fake GPS detected — suspended';
+  // Change admin driver color
+  admDrivers.find(d=>d.l==='D4').s='alert';
+}
+
+function simulateGpsOff(){
+  addAlert('📴 Driver RK: GPS signal OFF — Ride paused, alert sent','just now','⚠️');
+  // Flash GPS bar in user view
+  const g=document.getElementById('userGps');
+  const orig=g.className+' '+g.textContent;
+  g.className='gps-bar gps-err'; g.textContent='⚠️  Driver GPS lost — Waiting to reconnect…';
+  setTimeout(()=>{ g.className='gps-bar gps-ok'; g.textContent='📍  GPS Reacquired — Tracking resumed'; },4000);
+}
+
+function triggerBookingFromAdmin(){
+  addAlert('📥 New booking — Tatibandh, Raipur — Assigned to SK','just now','🚗');
+  document.getElementById('aRides').textContent=parseInt(document.getElementById('aRides').textContent)+1;
+}
+
+function blockDriver(){
+  addAlert('🚫 Driver D-04 blocked by admin — Account suspended','just now','🚫');
+  document.getElementById('d04st').textContent='🚫 Suspended';
+  document.getElementById('d04sub').textContent='⛔ Account suspended by admin';
+}
+
+// ══════════════════════════════════════════════════ AUTO DEMO
+function autoDemo(){
+  let step=0;
+  const steps=[
+    ()=>{ if(rideState!=='idle') setState('idle'); },
+    ()=>setState('searching'),
+    ()=>setState('assigned'),
+    ()=>setState('trip'),
+    ()=>setState('complete'),
+  ];
+  const delays=[300,3500,4500,14000,6000];
+  function runStep(){
+    if(step>=steps.length) return;
+    setTimeout(()=>{ steps[step](); step++; runStep(); }, delays[step]||1000);
+  }
+  setState('idle');
+  setTimeout(runStep,400);
+}
+
+// ══════════════════════════════════════════════════ CLOCK
+function updateClock(){
+  document.getElementById('sbarTime').textContent=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+setInterval(updateClock,1000); updateClock();
+
+// ══════════════════════════════════════════════════ INIT
+window.addEventListener('load',()=>{
+  resizeAll();
+  window.addEventListener('resize',resizeAll);
+  loop();
+  setState('idle');
+  // Periodic admin stat updates
+  setInterval(()=>{
+    document.getElementById('aRides').textContent=2+Math.floor(Math.random()*4);
+    document.getElementById('aActive').textContent=6+Math.floor(Math.random()*3);
+  }, 12000);
+});
 </script>
 </body>
 </html>
