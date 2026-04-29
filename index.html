@@ -3,293 +3,993 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DriveBuddy — Admin Dispatch Panel</title>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>DriveBuddy — Premium Driver Services | Chhattisgarh</title>
+<meta name="description" content="Chhattisgarh's #1 driver-on-demand. Certified, background-verified drivers in Raipur, Bhilai, Durg & Bilaspur. 30-min response. Call 9111473929">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600;1,700&family=Figtree:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;background:#F0F4F8;font-family:'DM Sans',sans-serif;color:#0F172A;overflow:hidden}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;font-size:16px;-webkit-font-smoothing:antialiased}
 :root{
-  --blue:#1D4ED8;--blue-l:#EFF6FF;--blue-m:#DBEAFE;
-  --green:#059669;--green-l:#ECFDF5;
-  --amber:#D97706;--amber-l:#FFFBEB;
-  --red:#DC2626;--red-l:#FEF2F2;
-  --text:#0F172A;--text2:#475569;--text3:#94A3B8;
-  --border:#E2E8F0;--bg:#FFFFFF;--surf:#F8FAFC;
-  --gold:#C9993A;--radius:14px;
+  --ink:#08070A;--ink2:#111018;--ink3:#1A1824;--ink4:#242130;
+  --gold:#C9993A;--gold-bright:#E5B355;--gold-pale:#F5E8CC;
+  --gold-dim:rgba(201,153,58,0.10);--gold-rim:rgba(201,153,58,0.22);
+  --cream:#F2EAD8;--cream-80:rgba(242,234,216,0.80);--cream-50:rgba(242,234,216,0.50);
+  --cream-25:rgba(242,234,216,0.25);--cream-10:rgba(242,234,216,0.08);
+  --rim:rgba(242,234,216,0.07);--red:#E05252;--green:#2DBB74;
+  --serif:'Cormorant Garamond',serif;--sans:'Figtree',sans-serif;--mono:'DM Mono',monospace;
+  --ease:cubic-bezier(0.22,1,0.36,1);--dur:0.5s;
+}
+body{background:var(--ink);color:var(--cream);font-family:var(--sans);overflow-x:hidden;line-height:1.6}
+a{text-decoration:none;color:inherit}
+::-webkit-scrollbar{width:2px}::-webkit-scrollbar-track{background:var(--ink)}::-webkit-scrollbar-thumb{background:var(--gold)}
+body::after{content:'';position:fixed;inset:0;z-index:9000;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)' opacity='0.03'/%3E%3C/svg%3E");opacity:0.4;mix-blend-mode:soft-light}
+
+#scrollBar{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--gold-bright));z-index:9999;width:0%;transition:width 0.1s linear;pointer-events:none}
+#cursorGlow{position:fixed;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(201,153,58,0.04) 0%,transparent 65%);pointer-events:none;z-index:1;transform:translate(-50%,-50%);transition:opacity 0.3s;opacity:0}
+
+/* ── LOGO ── */
+.logo-mark{display:flex;align-items:center;gap:0.65rem;cursor:pointer}
+.logo-text{display:flex;flex-direction:column;line-height:1}
+.logo-text-main{font-family:var(--serif);font-size:1.5rem;font-weight:700;letter-spacing:-0.01em;color:var(--cream)}
+.logo-text-main span{color:var(--gold)}
+.logo-text-sub{font-family:var(--mono);font-size:0.52rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--cream-50);margin-top:1px}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:500;display:flex;align-items:center;justify-content:space-between;padding:1.1rem 5%;background:rgba(8,7,10,0.75);backdrop-filter:blur(32px) saturate(1.4);border-bottom:1px solid var(--rim);transition:padding var(--dur) var(--ease),background var(--dur) var(--ease)}
+nav.scrolled{padding:0.7rem 5%;background:rgba(8,7,10,0.96)}
+.nav-links{display:flex;align-items:center;gap:0.2rem;background:var(--cream-10);border:1px solid var(--rim);border-radius:50px;padding:0.35rem 0.7rem}
+.nav-links a{font-size:0.8rem;font-weight:500;color:var(--cream-50);padding:0.35rem 0.85rem;border-radius:40px;transition:color 0.2s,background 0.2s;white-space:nowrap}
+.nav-links a:hover{color:var(--cream);background:var(--cream-10)}
+.nav-actions{display:flex;align-items:center;gap:0.7rem}
+.nav-call{display:flex;align-items:center;gap:0.5rem;background:var(--gold);color:var(--ink);padding:0.5rem 1.2rem;border-radius:50px;font-size:0.78rem;font-weight:700;letter-spacing:0.03em;transition:var(--dur) var(--ease);white-space:nowrap}
+.nav-call:hover{background:var(--gold-bright);box-shadow:0 6px 24px rgba(201,153,58,0.35);transform:translateY(-1px)}
+
+/* ══════════════════════════════════════
+   HAMBURGER — Uber style (3 lines)
+══════════════════════════════════════ */
+.hamburger{display:none;flex-direction:column;justify-content:center;gap:5px;cursor:pointer;padding:9px 10px;border-radius:12px;background:var(--cream-10);border:1px solid var(--rim);transition:var(--dur) var(--ease);width:44px;height:44px}
+.hamburger:hover{border-color:var(--gold-rim);background:var(--gold-dim)}
+.hamburger span{display:block;height:2px;background:var(--cream);border-radius:2px;transition:var(--dur) var(--ease)}
+.hamburger span:nth-child(1){width:22px}
+.hamburger span:nth-child(2){width:16px}
+.hamburger span:nth-child(3){width:22px}
+.hamburger.open span:nth-child(1){transform:rotate(45deg) translate(4.9px,4.9px);width:22px}
+.hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(4.9px,-4.9px);width:22px}
+
+/* ══════════════════════════════════════
+   UBER-STYLE MOBILE MENU
+══════════════════════════════════════ */
+.mob-overlay{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity 0.3s ease}
+.mob-overlay.open{opacity:1;pointer-events:all}
+
+.mob-menu{
+  position:fixed;top:0;left:0;bottom:0;z-index:801;
+  width:min(320px,88vw);
+  background:#131313;
+  display:flex;flex-direction:column;
+  transform:translateX(-100%);
+  transition:transform 0.4s cubic-bezier(0.4,0,0.2,1);
+  overflow:hidden;
+}
+.mob-menu.open{transform:translateX(0)}
+
+/* Menu Header – avatar + brand */
+.mob-header{
+  padding:3rem 1.5rem 1.5rem;
+  background:linear-gradient(160deg,#1a1a1a 0%,#0f0f0f 100%);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  position:relative;
+}
+.mob-header::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  opacity:0.4;
+}
+.mob-avatar{
+  width:52px;height:52px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),#8A6A20);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:1.4rem;font-weight:700;color:var(--ink);
+  margin-bottom:1rem;border:2px solid var(--gold-rim);
+}
+.mob-header-name{font-size:1.15rem;font-weight:700;color:#fff;letter-spacing:-0.01em;margin-bottom:0.15rem}
+.mob-header-sub{font-size:0.72rem;color:rgba(255,255,255,0.4);font-family:var(--mono);letter-spacing:0.05em}
+.mob-close-btn{
+  position:absolute;top:1.2rem;right:1.2rem;
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.1);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:rgba(255,255,255,0.6);
+  font-size:1rem;transition:0.2s;
+}
+.mob-close-btn:hover{background:rgba(255,255,255,0.15);color:#fff}
+
+/* Menu Nav Items */
+.mob-nav{flex:1;overflow-y:auto;padding:0.5rem 0}
+.mob-nav::-webkit-scrollbar{display:none}
+
+.mob-group-label{
+  padding:1rem 1.5rem 0.4rem;
+  font-size:0.62rem;font-weight:700;
+  color:rgba(255,255,255,0.25);
+  letter-spacing:0.12em;text-transform:uppercase;
+  font-family:var(--mono);
 }
 
-/* ── LAYOUT ── */
-.layout{display:grid;grid-template-rows:54px 1fr;grid-template-columns:320px 1fr 340px;height:100vh}
+.mob-nav-item{
+  display:flex;align-items:center;
+  padding:0 1.5rem;
+  height:58px;
+  cursor:pointer;
+  transition:background 0.15s;
+  position:relative;
+  gap:1rem;
+}
+.mob-nav-item:hover{background:rgba(255,255,255,0.05)}
+.mob-nav-item:active{background:rgba(255,255,255,0.08)}
 
-/* ── HEADER ── */
-.hdr{grid-column:1/-1;background:var(--text);display:flex;align-items:center;padding:0 1.25rem;gap:1.5rem;border-bottom:1px solid rgba(255,255,255,.06)}
-.brand{font-family:'Sora',sans-serif;font-size:1rem;font-weight:800;color:#fff;display:flex;align-items:center;gap:.5rem;white-space:nowrap}
-.brand span{color:var(--gold)}
-.hdr-badge{font-size:.62rem;padding:.2rem .6rem;border-radius:20px;display:flex;align-items:center;gap:.3rem;white-space:nowrap}
-.hb-live{background:rgba(5,150,105,.18);color:var(--green);border:1px solid rgba(5,150,105,.3)}
-.hb-admin{background:rgba(201,153,58,.18);color:var(--gold);border:1px solid rgba(201,153,58,.3)}
-.ldot{width:5px;height:5px;border-radius:50%;animation:lp 1.5s infinite}
-.ldot-g{background:var(--green)}
-@keyframes lp{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(1.7)}}
-.hdr-stats{display:flex;gap:1.2rem;margin-left:auto}
-.hds{text-align:center}
-.hds-n{font-family:'Sora',sans-serif;font-size:.95rem;font-weight:800;color:white}
-.hds-l{font-size:.58rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em}
+.mob-nav-icon{
+  width:40px;height:40px;flex-shrink:0;
+  border-radius:12px;
+  background:rgba(255,255,255,0.06);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;transition:0.2s;
+}
+.mob-nav-item:hover .mob-nav-icon{background:rgba(201,153,58,0.15)}
+.mob-nav-item.gold-nav .mob-nav-icon{background:rgba(201,153,58,0.15);border:1px solid var(--gold-rim)}
 
-/* ── SIDEBAR ── */
-.sidebar{background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-.panel-hdr{padding:.85rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.panel-title{font-family:'Sora',sans-serif;font-size:.82rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.5rem}
-.badge{font-size:.62rem;font-weight:700;padding:.15rem .5rem;border-radius:20px}
-.panel-body{flex:1;overflow-y:auto;padding:.75rem .85rem}
-.panel-body::-webkit-scrollbar{width:3px}
-.panel-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.mob-nav-text{flex:1}
+.mob-nav-label{font-size:0.95rem;font-weight:600;color:#fff;line-height:1.2}
+.mob-nav-desc{font-size:0.72rem;color:rgba(255,255,255,0.35);margin-top:1px}
 
-/* ── BOOKING CARD ── */
-.bk-card{background:var(--surf);border:1.5px solid var(--border);border-radius:12px;padding:.9rem;margin-bottom:.65rem;transition:.25s;cursor:default}
-.bk-card:hover{border-color:var(--blue-m)}
-.bk-card.selected{border-color:var(--blue);background:var(--blue-l)}
-.bk-card.assigned{border-color:var(--green);background:var(--green-l);opacity:.75}
-.bk-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.6rem}
-.bk-name{font-size:.85rem;font-weight:700;color:var(--text)}
-.bk-time{font-size:.65rem;color:var(--text3);font-family:'DM Mono',monospace}
-.bk-badge{font-size:.62rem;font-weight:700;padding:.16rem .5rem;border-radius:20px;white-space:nowrap}
-.bb-new{background:var(--blue-l);color:var(--blue)}
-.bb-assigned{background:var(--green-l);color:var(--green)}
-.bb-active{background:var(--amber-l);color:var(--amber)}
-.bk-row{display:flex;align-items:flex-start;gap:.5rem;margin-bottom:.32rem}
-.bk-ico{font-size:.8rem;width:16px;flex-shrink:0;margin-top:.05rem}
-.bk-txt{font-size:.76rem;color:var(--text2);line-height:1.4}
-.bk-divider{height:1px;background:var(--border);margin:.6rem 0}
-.bk-pkg{font-size:.68rem;font-weight:700;color:var(--blue);background:var(--blue-m);border-radius:6px;padding:.15rem .5rem;display:inline-flex}
+.mob-nav-arrow{
+  color:rgba(255,255,255,0.2);
+  font-size:0.8rem;
+}
+.mob-nav-item.gold-nav .mob-nav-label{color:var(--gold)}
+.mob-nav-item.gold-nav .mob-nav-arrow{color:var(--gold);opacity:0.5}
 
-/* ASSIGN SECTION */
-.assign-section{margin-top:.7rem}
-.assign-label{font-size:.68rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem}
-.assign-select{width:100%;background:white;border:1.5px solid var(--border);border-radius:9px;padding:.62rem .85rem;font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text);outline:none;cursor:pointer;transition:.2s;appearance:none}
-.assign-select:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(29,78,216,.1)}
-.assign-btn{width:100%;margin-top:.5rem;background:var(--blue);color:white;border:none;border-radius:9px;padding:.65rem;font-family:'Sora',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:.4rem}
-.assign-btn:hover{background:#1E40AF}
-.assign-btn:disabled{opacity:.4;cursor:not-allowed}
-.unassign-btn{width:100%;margin-top:.3rem;background:transparent;color:var(--red);border:1px solid var(--red);border-radius:9px;padding:.5rem;font-size:.76rem;font-weight:600;cursor:pointer;transition:.2s;font-family:'DM Sans',sans-serif}
-.unassign-btn:hover{background:var(--red-l)}
+.mob-divider{height:1px;background:rgba(255,255,255,0.06);margin:0.4rem 1.5rem}
 
-/* ── MAP CENTER ── */
-.map-center{position:relative;overflow:hidden;background:#E8EEF5}
-#liveMap{width:100%;height:100%;display:block}
-.map-overlay{position:absolute;top:.85rem;left:.85rem;display:flex;flex-direction:column;gap:.5rem;pointer-events:none}
-.map-chip{background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-radius:10px;padding:.45rem .75rem;font-size:.72rem;font-weight:600;color:var(--text);box-shadow:0 2px 12px rgba(0,0,0,.12);display:flex;align-items:center;gap:.4rem}
-.map-ctrl{position:absolute;top:.85rem;right:.85rem;display:flex;flex-direction:column;gap:.35rem}
-.mc{width:32px;height:32px;border-radius:9px;border:1px solid var(--border);background:white;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.09);transition:.2s}
-.mc:hover{border-color:var(--blue);color:var(--blue)}
-.map-legend{position:absolute;bottom:.85rem;left:.85rem;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-radius:10px;padding:.6rem .85rem;font-size:.68rem;color:var(--text2);box-shadow:0 2px 12px rgba(0,0,0,.12)}
-.leg-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.2rem}
-.leg-row:last-child{margin-bottom:0}
-.leg-dot{width:10px;height:10px;border-radius:50%}
+/* Menu Footer */
+.mob-footer{
+  padding:1.2rem;
+  background:#0f0f0f;
+  border-top:1px solid rgba(255,255,255,0.06);
+}
+.mob-call-btn{
+  display:flex;align-items:center;justify-content:center;gap:0.6rem;
+  width:100%;padding:1rem;
+  background:var(--gold);color:var(--ink);
+  border-radius:12px;font-weight:700;font-size:0.95rem;
+  margin-bottom:0.6rem;transition:0.2s;
+}
+.mob-call-btn:hover{background:var(--gold-bright)}
+.mob-wa-btn{
+  display:flex;align-items:center;justify-content:center;gap:0.6rem;
+  width:100%;padding:0.85rem;
+  background:#25D366;color:#fff;
+  border-radius:12px;font-weight:700;font-size:0.88rem;
+  transition:0.2s;
+}
+.mob-wa-btn:hover{background:#1ebe5a}
 
-/* ── RIGHT PANEL ── */
-.right-panel{background:var(--bg);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+/* ── MARQUEE ── */
+.marquee-wrap{background:var(--gold);overflow:hidden;padding:0.55rem 0;position:relative;z-index:2}
+.marquee-track{display:flex;gap:0;animation:marqueeScroll 28s linear infinite;width:max-content}
+.marquee-track:hover{animation-play-state:paused}
+.marquee-item{display:flex;align-items:center;gap:0.7rem;padding:0 2rem;font-family:var(--mono);font-size:0.72rem;font-weight:500;color:var(--ink);letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap}
+.marquee-dot{width:4px;height:4px;background:rgba(8,7,10,0.4);border-radius:50%}
+@keyframes marqueeScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 
-/* LIVE TRACKING BOX */
-.track-box{border-bottom:1px solid var(--border);flex-shrink:0}
-.track-content{padding:.75rem .9rem}
-.track-empty{text-align:center;padding:1.5rem;color:var(--text3);font-size:.8rem;line-height:1.7}
-.track-driver{margin-bottom:.75rem}
-.td-hdr{display:flex;align-items:center;gap:.55rem;margin-bottom:.5rem}
-.td-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:700;font-size:.78rem;color:white;flex-shrink:0}
-.td-info{flex:1}
-.td-name{font-size:.82rem;font-weight:700;color:var(--text)}
-.td-sub{font-size:.7rem;color:var(--text3)}
-.coord-box{background:var(--surf);border-radius:9px;padding:.55rem .7rem;font-family:'DM Mono',monospace;font-size:.65rem;color:var(--text2);line-height:1.8}
-.coord-box span{color:var(--blue);font-weight:600}
-.loc-update{display:flex;align-items:center;justify-content:space-between;margin-top:.5rem}
-.lu-time{font-size:.65rem;color:var(--text3);font-family:'DM Mono',monospace}
-.lu-badge{font-size:.62rem;font-weight:700;padding:.12rem .45rem;border-radius:20px;display:flex;align-items:center;gap:.25rem}
-.lub-ok{background:var(--green-l);color:var(--green)}
-.lub-warn{background:var(--amber-l);color:var(--amber)}
-.eta-mini{display:flex;gap:.6rem;margin-top:.65rem}
-.eta-m-it{flex:1;background:var(--blue-l);border-radius:9px;padding:.55rem;text-align:center}
-.eta-m-val{font-family:'Sora',sans-serif;font-size:1rem;font-weight:800;color:var(--blue)}
-.eta-m-lbl{font-size:.58rem;color:var(--text3);margin-top:.1rem;text-transform:uppercase}
+/* ── HERO ── */
+.hero{min-height:100svh;display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center;padding:9rem 5% 5rem;max-width:1400px;margin:0 auto;position:relative}
+#heroCanvas{position:absolute;inset:0;pointer-events:none;opacity:0.6;z-index:0}
+.hero::before{content:'';position:absolute;top:10%;right:0;width:50%;height:80%;background:radial-gradient(ellipse at 80% 40%,rgba(201,153,58,0.08) 0%,transparent 65%);pointer-events:none}
+.hero-left{position:relative;z-index:1}
+.h-eyebrow{display:inline-flex;align-items:center;gap:0.7rem;background:var(--gold-dim);border:1px solid var(--gold-rim);border-radius:50px;padding:0.4rem 1rem;font-family:var(--mono);font-size:0.65rem;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:2rem}
+.live{width:7px;height:7px;background:var(--green);border-radius:50%;animation:livepulse 2s ease infinite}
+@keyframes livepulse{0%{box-shadow:0 0 0 0 rgba(45,187,116,0.5)}70%{box-shadow:0 0 0 8px rgba(45,187,116,0)}100%{box-shadow:0 0 0 0 rgba(45,187,116,0)}}
+.hero-h1{font-family:var(--serif);font-size:clamp(3rem,5.2vw,5.8rem);font-weight:700;line-height:1.04;letter-spacing:-0.02em;color:var(--cream);margin-bottom:1.6rem}
+.hero-h1 em{font-style:italic;color:var(--gold);font-weight:600}
+.hero-h1 .thin{font-weight:400;font-style:italic;color:var(--cream-50);font-size:0.88em}
+.hero-p{color:var(--cream-50);font-size:1rem;line-height:1.75;font-weight:300;max-width:420px;margin-bottom:2.4rem}
+.trust-row{display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:2.4rem}
+.t-chip{display:flex;align-items:center;gap:0.4rem;font-family:var(--mono);font-size:0.68rem;color:var(--cream-50);border:1px solid var(--rim);border-radius:8px;padding:0.35rem 0.8rem;background:var(--cream-10);letter-spacing:0.05em;transition:0.3s}
+.t-chip:hover{border-color:var(--gold-rim);color:var(--gold);background:var(--gold-dim)}
+.t-chip .tk{color:var(--gold)}
+.hero-btns{display:flex;gap:0.9rem;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.9rem 2rem;border-radius:50px;font-weight:600;font-size:0.88rem;letter-spacing:0.02em;transition:var(--dur) var(--ease);cursor:pointer;border:none;font-family:var(--sans);position:relative;overflow:hidden}
+.btn::after{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,0.15) 50%,transparent 70%);transform:translateX(-100%);transition:transform 0.6s}
+.btn:hover::after{transform:translateX(100%)}
+.btn-primary{background:var(--gold);color:var(--ink)}.btn-primary:hover{background:var(--gold-bright);transform:translateY(-2px);box-shadow:0 12px 32px rgba(201,153,58,0.45)}
+.btn-ghost{background:transparent;color:var(--cream);border:1px solid var(--rim)}.btn-ghost:hover{border-color:var(--cream-25);background:var(--cream-10)}
 
-/* ALERTS */
-.alert-row{display:flex;align-items:flex-start;gap:.55rem;padding:.65rem .9rem;border-bottom:1px solid var(--border);animation:aIn .35s ease}
-@keyframes aIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}
-.ar-ico{font-size:.9rem;flex-shrink:0;margin-top:.05rem}
-.ar-title{font-size:.76rem;font-weight:600;color:var(--text)}
-.ar-time{font-size:.64rem;color:var(--text3);margin-top:.1rem}
+/* ── BOOK CARD ── */
+.book-card{background:var(--ink2);border:1px solid var(--rim);border-radius:28px;padding:2.6rem 2.2rem;position:relative;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.55);z-index:1;animation:bookFloat 6s ease-in-out infinite}
+@keyframes bookFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.book-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 0%,var(--gold) 30%,var(--gold-bright) 55%,transparent 100%)}
+.bc-title{font-family:var(--serif);font-size:1.65rem;font-weight:700;color:var(--cream);margin-bottom:0.3rem}
+.bc-sub{font-size:0.8rem;color:var(--cream-50);margin-bottom:1.8rem;font-weight:300}.bc-sub strong{color:var(--green)}
+.book-success{display:none;text-align:center;padding:2rem 0}
+.book-success .si{font-size:3.5rem;margin-bottom:1rem}
+.book-success h3{font-family:var(--serif);font-size:1.6rem;font-weight:700;color:var(--cream);margin-bottom:0.6rem}
+.book-success p{font-size:0.88rem;color:var(--cream-50);line-height:1.7;font-weight:300}
+.book-success .wa-follow{margin-top:1.4rem;display:inline-flex;align-items:center;gap:0.5rem;background:#25D366;color:#fff;padding:0.7rem 1.5rem;border-radius:50px;font-size:0.83rem;font-weight:700;transition:var(--dur)}
+.book-success .wa-follow:hover{background:#1DBE5A;transform:translateY(-1px)}
+.field{margin-bottom:0.9rem;position:relative}
+.field label{display:block;font-size:0.68rem;font-weight:600;color:var(--cream-25);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.35rem;font-family:var(--mono)}
+.field-icon{position:absolute;left:1rem;bottom:0.9rem;font-size:0.85rem;z-index:1;pointer-events:none}
+.field input,.field select,.field textarea{width:100%;background:var(--ink3);border:1px solid var(--rim);border-radius:12px;color:var(--cream);font-family:var(--sans);font-size:0.87rem;padding:0.82rem 1rem 0.82rem 2.5rem;outline:none;transition:var(--dur);appearance:none;-webkit-appearance:none}
+.field input::placeholder,.field textarea::placeholder{color:var(--cream-25)}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold-rim);background:var(--ink4);box-shadow:0 0 0 3px rgba(201,153,58,0.08)}
+.field select option{background:var(--ink3);color:var(--cream)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:0.9rem}
+.field-err{font-size:0.7rem;color:var(--red);margin-top:0.25rem;display:none;font-family:var(--mono)}
+.submit-btn{width:100%;margin-top:1.2rem;background:var(--gold);color:var(--ink);border:none;border-radius:14px;padding:1.05rem;font-family:var(--sans);font-size:0.95rem;font-weight:700;cursor:pointer;transition:var(--dur) var(--ease);letter-spacing:0.01em;display:flex;align-items:center;justify-content:center;gap:0.6rem;position:relative;overflow:hidden}
+.submit-btn:hover{background:var(--gold-bright);transform:translateY(-2px);box-shadow:0 12px 28px rgba(201,153,58,0.4)}
+.submit-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.form-note{text-align:center;font-size:0.71rem;color:var(--cream-25);margin-top:0.75rem;display:flex;align-items:center;justify-content:center;gap:0.35rem;font-family:var(--mono)}
+.wa-alt{display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-top:0.9rem;padding:0.75rem;background:rgba(37,211,102,0.08);border:1px solid rgba(37,211,102,0.2);border-radius:12px;font-size:0.78rem;color:rgba(37,211,102,0.85);font-weight:500;cursor:pointer;transition:var(--dur)}
+.wa-alt:hover{background:rgba(37,211,102,0.13);color:#2DBB74}
+.or-divider{display:flex;align-items:center;gap:0.8rem;margin:0.8rem 0;font-size:0.7rem;color:var(--cream-25);font-family:var(--mono)}
+.or-divider::before,.or-divider::after{content:'';flex:1;height:1px;background:var(--rim)}
+.gem-divider{display:flex;align-items:center;margin:0 5%;padding:1rem 0}
+.gem-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--rim),transparent)}
+.gem-dot{width:6px;height:6px;background:var(--gold);transform:rotate(45deg);margin:0 2rem;flex-shrink:0;opacity:0.5;animation:gemPulse 2s ease infinite}
+@keyframes gemPulse{0%,100%{opacity:0.5;transform:rotate(45deg) scale(1)}50%{opacity:1;transform:rotate(45deg) scale(1.4)}}
+section{padding:7rem 5%}
+.s-inner{max-width:1400px;margin:0 auto}
+.s-label{display:inline-flex;align-items:center;gap:0.6rem;font-family:var(--mono);font-size:0.65rem;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:0.7rem}
+.s-label::before{content:'';width:18px;height:1px;background:var(--gold);opacity:0.5}
+.s-h{font-family:var(--serif);font-size:clamp(2.4rem,4vw,4rem);font-weight:700;line-height:1.08;letter-spacing:-0.02em;color:var(--cream)}
+.s-h em{font-style:italic;color:var(--gold);font-weight:600}
+.s-p{color:var(--cream-50);font-size:0.95rem;font-weight:300;line-height:1.8;max-width:460px}
 
-/* DRIVER ROSTER */
-.dr-item{padding:.65rem .9rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.65rem;cursor:pointer;transition:.2s}
-.dr-item:hover{background:var(--surf)}
-.dr-item:last-child{border-bottom:none}
-.dri-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.75rem;color:white;flex-shrink:0}
-.dri-info{flex:1}
-.dri-name{font-size:.8rem;font-weight:600;color:var(--text)}
-.dri-sub{font-size:.67rem;color:var(--text3);margin-top:.06rem}
-.dri-st{font-size:.65rem;font-weight:700;padding:.14rem .48rem;border-radius:20px;white-space:nowrap}
-.ds-online{background:var(--green-l);color:var(--green)}
-.ds-trip{background:var(--blue-l);color:var(--blue)}
-.ds-offline{background:var(--surf);color:var(--text3)}
-.ds-alert{background:var(--red-l);color:var(--red)}
+/* WHY */
+.why-bg{background:var(--ink)}
+.why-header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:2rem;margin-bottom:3.5rem}
+.why-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+.why-card{background:var(--ink2);border:1px solid var(--rim);border-radius:20px;padding:2rem 1.7rem;position:relative;overflow:hidden;transition:var(--dur) var(--ease);cursor:default}
+.why-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0;transition:var(--dur)}
+.why-card:hover{transform:translateY(-8px) scale(1.02);border-color:var(--gold-rim);box-shadow:0 20px 50px rgba(0,0,0,0.5)}.why-card:hover::before{opacity:1}
+.wc-num{font-family:var(--serif);font-size:3.8rem;font-weight:700;color:rgba(201,153,58,0.06);line-height:1;position:absolute;top:1rem;right:1.3rem}
+.wc-ico{width:48px;height:48px;border-radius:14px;background:var(--gold-dim);border:1px solid var(--gold-rim);display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:1.3rem;transition:var(--dur)}
+.why-card:hover .wc-ico{background:var(--gold);border-color:var(--gold);transform:rotate(-8deg) scale(1.15)}
+.why-card h3{font-size:0.95rem;font-weight:700;color:var(--cream);margin-bottom:0.45rem}
+.why-card p{font-size:0.81rem;color:var(--cream-50);line-height:1.65;font-weight:300}
 
-/* GENERAL */
-.section-title{font-size:.68rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;padding:.6rem .9rem .3rem}
-.empty-s{text-align:center;padding:1.5rem;color:var(--text3);font-size:.78rem;line-height:1.7}
-.fb-btn{width:calc(100% - 1.8rem);margin:.6rem .9rem;background:var(--blue);color:white;border:none;border-radius:10px;padding:.75rem;font-family:'Sora',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:.45rem}
-.fb-btn:hover{background:#1E40AF}
-.fb-btn.green{background:var(--green)}.fb-btn.green:hover{background:var(--green-d)}
-.fb-btn.red{background:var(--red)}.fb-btn.red:hover{background:#B91C1C}
-.chip{display:inline-flex;align-items:center;gap:.25rem;border-radius:20px;padding:.2rem .6rem;font-size:.68rem;font-weight:700}
-.chip-blue{background:var(--blue-l);color:var(--blue)}
-.chip-green{background:var(--green-l);color:var(--green)}
-.chip-red{background:var(--red-l);color:var(--red)}
+/* STATS */
+.stats-strip{background:var(--ink2);border-top:1px solid var(--rim);border-bottom:1px solid var(--rim);padding:3rem 5%}
+.stats-inner{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.stat-item{text-align:center;padding:0 2rem;border-right:1px solid var(--rim)}.stat-item:last-child{border-right:none}
+.stat-n{font-family:var(--serif);font-size:clamp(2.8rem,5vw,4.5rem);font-weight:700;color:var(--gold);line-height:1;letter-spacing:-0.03em;margin-bottom:0.4rem}
+.stat-l{font-family:var(--mono);font-size:0.68rem;color:var(--cream-25);letter-spacing:0.1em;text-transform:uppercase}
 
-/* TOAST */
-.toast{position:fixed;top:64px;right:1rem;background:var(--text);color:white;border-radius:11px;padding:.7rem 1.1rem;font-size:.8rem;font-weight:600;z-index:9999;transform:translateY(-4px);opacity:0;transition:.3s;max-width:300px;pointer-events:none}
-.toast.show{transform:none;opacity:1}
+/* SERVICES */
+.srv-bg{background:var(--ink2)}
+.srv-header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:2rem;margin-bottom:3.5rem}
+.srv-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+.srv-card{background:var(--ink);border:1px solid var(--rim);border-radius:20px;padding:2.2rem 2rem;display:flex;gap:1.8rem;align-items:flex-start;transition:var(--dur) var(--ease);position:relative;overflow:hidden}
+.srv-card::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,transparent,var(--gold),transparent);opacity:0;transition:var(--dur)}
+.srv-card:hover{border-color:var(--gold-rim);transform:translateX(5px);box-shadow:0 16px 40px rgba(0,0,0,0.4)}.srv-card:hover::after{opacity:1}
+.srv-ico{width:54px;height:54px;flex-shrink:0;border-radius:15px;background:var(--gold-dim);border:1px solid var(--gold-rim);display:flex;align-items:center;justify-content:center;font-size:1.25rem;transition:var(--dur)}
+.srv-card:hover .srv-ico{background:var(--gold);transform:rotate(-5deg) scale(1.1)}
+.srv-info h3{font-size:1.05rem;font-weight:700;color:var(--cream);margin-bottom:0.4rem}
+.srv-info p{font-size:0.82rem;color:var(--cream-50);line-height:1.65;font-weight:300}
+.srv-tag{display:inline-flex;margin-top:0.8rem;font-family:var(--mono);font-size:0.61rem;color:var(--gold);background:var(--gold-dim);border:1px solid var(--gold-rim);border-radius:5px;padding:0.18rem 0.55rem;letter-spacing:0.07em}
 
-/* REFRESH BTN */
-.refresh-badge{font-size:.62rem;color:var(--text3);background:var(--surf);border:1px solid var(--border);border-radius:20px;padding:.18rem .55rem;cursor:pointer;transition:.2s}
-.refresh-badge:hover{border-color:var(--blue);color:var(--blue)}
+/* PRICING */
+.pricing-bg{background:var(--ink);position:relative;overflow:hidden}
+.pricing-bg::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:500px;background:radial-gradient(ellipse,rgba(201,153,58,0.05) 0%,transparent 65%);pointer-events:none;animation:pricingPulse 6s ease infinite}
+@keyframes pricingPulse{0%,100%{opacity:0.5}50%{opacity:1}}
+.pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:3.5rem}
+.pc{background:var(--ink2);border:1px solid var(--rim);border-radius:22px;padding:2rem 1.7rem;display:flex;flex-direction:column;position:relative;overflow:hidden;transition:var(--dur) var(--ease)}
+.pc.featured{border-color:var(--gold-rim);background:linear-gradient(160deg,var(--ink2) 0%,rgba(201,153,58,0.05) 100%)}
+.pc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(201,153,58,0.4),transparent);opacity:0;transition:var(--dur)}
+.pc.featured::before,.pc:hover::before{opacity:1}
+.pc:hover{transform:translateY(-8px);border-color:var(--gold-rim);box-shadow:0 28px 70px rgba(0,0,0,0.5)}
+.pc-badge{font-family:var(--mono);font-size:0.6rem;color:var(--gold);background:var(--gold-dim);border:1px solid var(--gold-rim);border-radius:5px;padding:0.18rem 0.55rem;letter-spacing:0.08em;margin-bottom:1.1rem;align-self:flex-start}
+.pc-name{font-family:var(--serif);font-size:1.2rem;font-weight:700;color:var(--cream);margin-bottom:0.2rem}
+.pc-desc{font-size:0.78rem;color:var(--cream-50);margin-bottom:1.3rem;font-weight:300;line-height:1.5}
+.pc-price{margin-bottom:1.3rem}
+.pc-amt{font-family:var(--serif);font-size:2.5rem;font-weight:700;color:var(--gold);line-height:1;letter-spacing:-0.02em}
+.pc-amt-range{font-family:var(--serif);font-size:1.8rem;font-weight:700;color:var(--gold);line-height:1;letter-spacing:-0.02em}
+.pc-per{font-size:0.76rem;color:var(--cream-25);margin-left:0.15rem;font-family:var(--mono)}
+.pc-features{list-style:none;margin-bottom:1.6rem;flex:1}
+.pc-features li{font-size:0.8rem;color:var(--cream-50);padding:0.38rem 0;border-bottom:1px solid var(--rim);display:flex;align-items:center;gap:0.45rem;font-weight:300}
+.pc-features li::before{content:'↗';color:var(--gold);flex-shrink:0;font-size:0.65rem}
+.pc-features li:last-child{border-bottom:none}
+.pc-btn{width:100%;padding:0.8rem;border-radius:11px;font-weight:700;font-size:0.83rem;letter-spacing:0.02em;transition:var(--dur);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.4rem;font-family:var(--sans)}
+.pc-btn-outline{background:transparent;color:var(--cream);border:1px solid var(--rim)!important;border-radius:11px!important}
+.pc-btn-outline:hover{border-color:var(--gold-rim)!important;background:var(--gold-dim)}
+.pc-btn-gold{background:var(--gold);color:var(--ink)}.pc-btn-gold:hover{background:var(--gold-bright);box-shadow:0 10px 24px rgba(201,153,58,0.4)}
 
-/* RESPONSIVE: hide some panels on medium screens */
-@media(max-width:1100px){.right-panel{display:none}}
-@media(max-width:780px){
-  body{overflow:auto}
-  .layout{display:block;height:auto}
-  .sidebar{height:auto;overflow:visible;border-right:none;border-bottom:1px solid var(--border)}
-  .map-center{height:55vh;min-height:300px}
+/* REVIEWS */
+.rev-bg{background:var(--ink2)}
+.rev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:3.5rem}
+.rev-card{background:var(--ink);border:1px solid var(--rim);border-radius:20px;padding:2rem;transition:var(--dur);position:relative;overflow:hidden}
+.rev-card::before{content:'\201C';position:absolute;top:0.5rem;right:1.3rem;font-family:var(--serif);font-size:5rem;color:rgba(201,153,58,0.06);line-height:1}
+.rev-card:hover{border-color:var(--gold-rim);transform:translateY(-6px);box-shadow:0 20px 50px rgba(0,0,0,0.4)}
+.stars{color:var(--gold);font-size:0.75rem;letter-spacing:0.1em;margin-bottom:0.9rem}
+.rev-text{font-size:0.86rem;color:var(--cream-50);line-height:1.78;font-style:italic;font-weight:300;margin-bottom:1.6rem}
+.rev-by{display:flex;align-items:center;gap:0.8rem}
+.rev-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#8A6A20);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:1rem;color:var(--ink);font-weight:700;flex-shrink:0}
+.rev-name{font-size:0.83rem;font-weight:700;color:var(--cream)}
+.rev-loc{font-size:0.7rem;color:var(--cream-25);margin-top:0.1rem;font-family:var(--mono)}
+
+/* CITIES */
+.cities-bg{background:var(--ink)}
+.cities-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:3.5rem}
+.city-card{background:var(--ink2);border:1px solid var(--rim);border-radius:20px;padding:2rem 1.7rem;text-align:center;transition:var(--dur) var(--ease)}
+.city-card:hover{border-color:var(--gold-rim);transform:translateY(-8px) scale(1.02);box-shadow:0 24px 60px rgba(0,0,0,0.5)}
+.city-em{font-size:2.5rem;margin-bottom:0.9rem;display:block;transition:0.3s}
+.city-card:hover .city-em{transform:scale(1.25) rotate(-5deg)}
+.city-name{font-family:var(--serif);font-size:1.5rem;font-weight:700;color:var(--cream);margin-bottom:0.4rem}
+.city-d{font-size:0.79rem;color:var(--cream-25);line-height:1.6;font-weight:300}
+.city-tag{display:inline-block;margin-top:0.9rem;font-family:var(--mono);font-size:0.6rem;color:var(--gold);background:var(--gold-dim);border:1px solid var(--gold-rim);border-radius:5px;padding:0.18rem 0.6rem;letter-spacing:0.08em}
+
+/* FAQ */
+.faq-bg{background:var(--ink2)}
+.faq-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-top:3.5rem;align-items:start}
+.faq-item{background:var(--ink);border:1px solid var(--rim);border-radius:15px;overflow:hidden;transition:var(--dur)}
+.faq-item:hover,.faq-item.open{border-color:var(--gold-rim)}
+.faq-q{padding:1.3rem 1.5rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:1rem;font-weight:600;font-size:0.9rem;color:var(--cream);user-select:none}
+.faq-q:hover{color:var(--gold)}
+.faq-arrow{color:var(--gold);flex-shrink:0;font-size:0.75rem;transition:transform 0.3s}
+.faq-item.open .faq-arrow{transform:rotate(180deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height 0.4s var(--ease),padding 0.3s;font-size:0.83rem;color:var(--cream-50);line-height:1.75;font-weight:300;padding:0 1.5rem}
+.faq-item.open .faq-a{max-height:200px;padding:0 1.5rem 1.3rem}
+
+/* DRIVE WITH US */
+.drive-with-us{background:var(--ink);padding:7rem 5%;position:relative;overflow:hidden}
+.drive-with-us::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,rgba(201,153,58,0.04) 0%,transparent 50%,rgba(201,153,58,0.03) 100%);pointer-events:none}
+.dwu-inner{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center}
+.dwu-perks{display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;margin:2.2rem 0}
+.dwu-perk{background:var(--ink2);border:1px solid var(--rim);border-radius:16px;padding:1.3rem;transition:var(--dur)}
+.dwu-perk:hover{border-color:var(--gold-rim);background:var(--gold-dim)}
+.dwu-perk-ico{font-size:1.5rem;margin-bottom:0.5rem}
+.dwu-perk h4{font-size:0.88rem;font-weight:700;color:var(--cream);margin-bottom:0.25rem}
+.dwu-perk p{font-size:0.75rem;color:var(--cream-50);line-height:1.5;font-weight:300}
+.dwu-cta-row{display:flex;gap:0.8rem;flex-wrap:wrap}
+.btn-gold-outline{background:transparent;color:var(--gold);border:1px solid var(--gold-rim);padding:0.9rem 2rem;border-radius:50px;font-weight:600;font-size:0.88rem;transition:var(--dur);display:inline-flex;align-items:center;gap:0.5rem}
+.btn-gold-outline:hover{background:var(--gold);color:var(--ink);box-shadow:0 10px 28px rgba(201,153,58,0.35)}
+.dwu-right{position:relative}
+.driver-card{background:var(--ink2);border:1px solid var(--rim);border-radius:24px;padding:2.2rem;position:relative;overflow:hidden}
+.driver-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.driver-avatar-row{display:flex;align-items:center;gap:1rem;margin-bottom:1.8rem}
+.driver-av{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#6A4E1A);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:1.6rem;color:var(--ink);font-weight:700;flex-shrink:0;border:2px solid var(--gold-rim)}
+.driver-info-name{font-size:1rem;font-weight:700;color:var(--cream)}
+.driver-info-meta{font-size:0.75rem;color:var(--cream-50);display:flex;align-items:center;gap:0.5rem;margin-top:0.2rem;font-family:var(--mono)}
+.driver-info-meta .badge{color:var(--gold);background:var(--gold-dim);border:1px solid var(--gold-rim);border-radius:4px;padding:0.1rem 0.4rem;font-size:0.62rem}
+.driver-quote{font-size:1rem;color:var(--cream-50);line-height:1.75;font-style:italic;font-weight:300;margin-bottom:1.5rem;position:relative;padding-left:1rem;border-left:2px solid var(--gold-rim)}
+.driver-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;padding-top:1.5rem;border-top:1px solid var(--rim)}
+.driver-stat-n{font-family:var(--serif);font-size:1.6rem;font-weight:700;color:var(--gold)}
+.driver-stat-l{font-size:0.68rem;color:var(--cream-25);font-family:var(--mono);margin-top:0.1rem}
+.dwu-badge{position:absolute;top:-1.5rem;right:1.5rem;background:var(--green);border-radius:50px;padding:0.5rem 1rem;font-size:0.75rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:0.4rem;box-shadow:0 8px 24px rgba(45,187,116,0.35)}
+
+/* CTA */
+.cta-bg{background:var(--ink2);text-align:center;padding:9rem 5%;position:relative;overflow:hidden}
+.cta-bg::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:900px;height:500px;background:radial-gradient(ellipse,rgba(201,153,58,0.07) 0%,transparent 65%);pointer-events:none;animation:pricingPulse 4s ease infinite}
+.cta-inner{max-width:600px;margin:0 auto;position:relative}
+.cta-h{font-family:var(--serif);font-size:clamp(2.8rem,5vw,5rem);font-weight:700;line-height:1.04;letter-spacing:-0.03em;color:var(--cream);margin-bottom:1.3rem}
+.cta-h em{font-style:italic;color:var(--gold)}
+.cta-p{color:var(--cream-50);font-size:0.97rem;font-weight:300;margin-bottom:2.8rem;line-height:1.75}
+.cta-row{display:flex;gap:0.9rem;justify-content:center;flex-wrap:wrap}
+.btn-wa{background:#25D366;color:#fff;padding:0.95rem 2.2rem;border-radius:50px;font-weight:700;font-size:0.88rem;display:inline-flex;align-items:center;gap:0.5rem;transition:var(--dur);position:relative;overflow:hidden}
+.btn-wa:hover{background:#1DBE5A;transform:translateY(-2px);box-shadow:0 10px 28px rgba(37,211,102,0.4)}
+
+/* FOOTER */
+footer{background:var(--ink2);border-top:1px solid var(--rim);padding:5rem 5% 2.5rem}
+.ft-inner{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:4rem;padding-bottom:3rem;border-bottom:1px solid var(--rim);margin-bottom:1.8rem}
+.ft-brand p{font-size:0.82rem;color:var(--cream-25);line-height:1.75;max-width:270px;font-weight:300;margin-top:1rem}
+.ft-contacts{margin-top:1.4rem;display:flex;flex-direction:column;gap:0.45rem}
+.ft-contacts a{font-size:0.82rem;color:var(--cream-50);display:flex;align-items:center;gap:0.5rem;transition:color 0.2s}
+.ft-contacts a:hover{color:var(--gold)}
+.ft-col h4{font-size:0.68rem;font-weight:700;color:var(--cream-25);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:1.1rem;font-family:var(--mono)}
+.ft-col ul{list-style:none}
+.ft-col ul li{margin-bottom:0.55rem}
+.ft-col ul li a{font-size:0.83rem;color:var(--cream-50);transition:color 0.2s}.ft-col ul li a:hover{color:var(--cream)}
+.ft-bottom{max-width:1400px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.ft-bottom p{font-size:0.74rem;color:var(--cream-25)}
+.ft-cities{font-family:var(--mono);font-size:0.66rem;color:var(--gold);letter-spacing:0.1em;opacity:0.7}
+
+/* AI FAB */
+.ai-fab{position:fixed;bottom:2rem;right:2rem;z-index:800;width:62px;height:62px;border-radius:50%;background:var(--ink2);border:1.5px solid var(--gold-rim);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(0,0,0,0.6);transition:var(--dur) var(--ease);animation:fab-in 0.5s var(--ease) 1s both,fabglow 3.5s ease 2s infinite}
+@keyframes fab-in{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes fabglow{0%,100%{box-shadow:0 8px 32px rgba(0,0,0,0.6),0 0 0 0 rgba(201,153,58,0.3)}50%{box-shadow:0 8px 32px rgba(0,0,0,0.6),0 0 0 14px rgba(201,153,58,0)}}
+.ai-fab:hover{transform:scale(1.1);border-color:var(--gold)}
+.ai-fab .fab-ai{position:absolute;bottom:-2px;right:-2px;width:20px;height:20px;background:var(--gold);border-radius:50%;border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:0.48rem;color:var(--ink);font-weight:700}
+
+/* CHAT PANEL */
+.chat-panel{position:fixed;bottom:7rem;right:2rem;z-index:800;width:390px;max-width:calc(100vw - 2rem);background:var(--ink2);border:1px solid var(--rim);border-radius:26px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,0.85);display:none;flex-direction:column;max-height:620px;transform:translateY(16px) scale(0.97);opacity:0;transition:transform 0.4s var(--ease),opacity 0.4s var(--ease)}
+.chat-panel.open{display:flex;transform:none;opacity:1}
+.chat-hd{background:var(--ink3);border-bottom:1px solid var(--rim);padding:1.15rem 1.3rem;display:flex;align-items:center;gap:0.9rem;position:relative}
+.chat-hd::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.chat-av{width:42px;height:42px;border-radius:50%;background:var(--gold-dim);border:1.5px solid var(--gold-rim);display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
+.chat-dot{position:absolute;bottom:1px;right:1px;width:10px;height:10px;background:var(--green);border-radius:50%;border:2px solid var(--ink2)}
+.chat-info-name{font-size:0.88rem;font-weight:700;color:var(--cream);display:flex;align-items:center;gap:0.5rem}
+.chat-badge{font-family:var(--mono);font-size:0.52rem;color:var(--gold);background:var(--gold-dim);border:1px solid var(--gold-rim);border-radius:4px;padding:0.1rem 0.4rem;letter-spacing:0.06em}
+.chat-status{font-size:0.68rem;color:var(--green);margin-top:0.1rem;display:flex;align-items:center;gap:0.3rem}
+.chat-status::before{content:'';width:5px;height:5px;background:var(--green);border-radius:50%;display:inline-block;animation:livepulse 2s ease infinite}
+.chat-close-btn{margin-left:auto;background:var(--cream-10);border:1px solid var(--rim);border-radius:9px;padding:0.4rem 0.65rem;cursor:pointer;color:var(--cream-50);font-size:0.75rem;transition:var(--dur);font-family:var(--mono);display:flex;align-items:center;gap:0.3rem}
+.chat-close-btn:hover{background:var(--gold-dim);border-color:var(--gold-rim);color:var(--cream)}
+.chat-msgs{flex:1;overflow-y:auto;padding:1.1rem;display:flex;flex-direction:column;gap:0.85rem;scroll-behavior:smooth;background:var(--ink)}
+.chat-msgs::-webkit-scrollbar{width:1px}
+.msg-wrap{display:flex;align-items:flex-end;gap:0.55rem}
+.msg-wrap.bot-wrap{align-self:flex-start}.msg-wrap.user-wrap{align-self:flex-end}
+.mini-av{width:25px;height:25px;border-radius:50%;background:var(--gold-dim);border:1px solid var(--gold-rim);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.msg{max-width:88%;padding:0.8rem 1.1rem;border-radius:17px;font-size:0.83rem;line-height:1.6;font-weight:300}
+.msg.bot{background:var(--ink2);border:1px solid var(--rim);color:var(--cream-50);border-radius:4px 17px 17px 17px}
+.msg.user{background:var(--gold);color:var(--ink);font-weight:500;border-radius:17px 17px 4px 17px}
+.msg.bot strong{color:var(--cream);font-weight:600}
+.msg-time{font-size:0.6rem;color:var(--cream-25);font-family:var(--mono);margin-top:0.25rem;text-align:right}
+.typing{display:flex;align-items:center;gap:4px;padding:0.9rem 1.1rem;background:var(--ink2);border:1px solid var(--rim);border-radius:4px 17px 17px 17px;width:65px}
+.typing span{width:5px;height:5px;background:var(--gold);border-radius:50%;animation:tdot 1.4s ease infinite;opacity:0.5}
+.typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,80%,100%{transform:scale(0.7);opacity:0.3}40%{transform:scale(1);opacity:1}}
+.chat-quick{padding:0.75rem 1rem;display:flex;gap:0.45rem;flex-wrap:wrap;border-top:1px solid var(--rim);background:var(--ink2)}
+.qb{font-size:0.68rem;color:var(--gold);background:var(--gold-dim);border:1px solid var(--gold-rim);border-radius:20px;padding:0.28rem 0.7rem;cursor:pointer;transition:var(--dur);font-family:var(--mono);white-space:nowrap}
+.qb:hover{background:var(--gold);color:var(--ink);transform:translateY(-1px)}
+.chat-input-row{padding:0.9rem;border-top:1px solid var(--rim);display:flex;gap:0.55rem;align-items:flex-end;background:var(--ink2)}
+.chat-inp{flex:1;background:var(--ink3);border:1px solid var(--rim);border-radius:11px;padding:0.7rem 0.95rem;color:var(--cream);font-family:var(--sans);font-size:0.84rem;outline:none;transition:var(--dur);resize:none;line-height:1.5;max-height:90px}
+.chat-inp::placeholder{color:var(--cream-25)}.chat-inp:focus{border-color:var(--gold-rim);box-shadow:0 0 0 3px rgba(201,153,58,0.07)}
+.chat-send{width:38px;height:38px;background:var(--gold);border:none;border-radius:10px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:var(--dur);color:var(--ink)}
+.chat-send:hover{background:var(--gold-bright);transform:scale(1.05)}.chat-send:disabled{opacity:0.35;cursor:not-allowed;transform:none}
+.chat-powered{text-align:center;padding:0.45rem;font-size:0.62rem;color:var(--cream-25);font-family:var(--mono);background:var(--ink2);letter-spacing:0.04em}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity 0.7s var(--ease),transform 0.7s var(--ease)}.reveal.visible{opacity:1;transform:none}
+.d1{transition-delay:0.1s}.d2{transition-delay:0.2s}.d3{transition-delay:0.3s}.d4{transition-delay:0.4s}
+
+/* RIPPLE */
+.ripple{position:absolute;border-radius:50%;transform:scale(0);animation:rippleAnim 0.6s linear;background:rgba(255,255,255,0.15);pointer-events:none}
+@keyframes rippleAnim{to{transform:scale(4);opacity:0}}
+
+/* ══════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════ */
+@media(max-width:1200px){.pricing-grid{grid-template-columns:1fr 1fr};.dwu-inner{gap:3rem}}
+@media(max-width:1100px){.why-grid{grid-template-columns:1fr 1fr}.cities-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;gap:2.5rem;padding:8rem 5% 5rem;text-align:center}
+  .trust-row{justify-content:center}.hero-btns{justify-content:center}.hero-p{margin:0 auto 2.4rem}
+  .srv-grid{grid-template-columns:1fr}
+  .stats-inner{grid-template-columns:1fr 1fr}
+  .stat-item{border-right:none;border-bottom:1px solid var(--rim);padding:1.8rem}
+  .stat-item:nth-child(even){border-left:1px solid var(--rim)}
+  .stat-item:last-child,.stat-item:nth-last-child(2):nth-child(odd){border-bottom:none}
+  .rev-grid{grid-template-columns:1fr}.ft-inner{grid-template-columns:1fr 1fr}.faq-grid{grid-template-columns:1fr}
+  .book-card{animation:none}
+  .dwu-inner{grid-template-columns:1fr;gap:2.5rem}
+  .dwu-perks{grid-template-columns:1fr 1fr}
+}
+@media(max-width:768px){
+  section{padding:5rem 5%}.pricing-grid{grid-template-columns:1fr 1fr}
+  .why-grid{grid-template-columns:1fr}
+  #cursorGlow{display:none}
+  .hamburger{display:flex}
+  .nav-links,.nav-actions .nav-call{display:none}
+}
+@media(max-width:580px){
+  .pricing-grid{grid-template-columns:1fr}.hero{padding:7rem 5% 4rem}
+  .cities-grid{grid-template-columns:1fr 1fr}.ft-inner{grid-template-columns:1fr}
+  .field-row{grid-template-columns:1fr}
+  .chat-panel{right:1rem;bottom:5.5rem;width:calc(100vw - 2rem);max-height:78vh}
+  .ai-fab{right:1rem;bottom:1.5rem}
+  .dwu-perks{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
 
-<div id="toast" class="toast"></div>
+<div id="scrollBar"></div>
+<div id="cursorGlow"></div>
 
-<div class="layout">
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="logo-icon" viewBox="0 0 48 48">
+    <circle cx="24" cy="24" r="19" fill="none" stroke="#C9993A" stroke-width="2.5"/>
+    <circle cx="24" cy="24" r="5.5" fill="#C9993A"/>
+    <line x1="24" y1="18.5" x2="24" y2="5" stroke="#C9993A" stroke-width="2.2" stroke-linecap="round"/>
+    <line x1="24" y1="29.5" x2="14.5" y2="41.5" stroke="#C9993A" stroke-width="2.2" stroke-linecap="round"/>
+    <line x1="24" y1="29.5" x2="33.5" y2="41.5" stroke="#C9993A" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M10 40 Q24 28 38 40" fill="none" stroke="#C9993A" stroke-width="1" opacity="0.3" stroke-dasharray="3,3"/>
+  </symbol>
+</svg>
 
-  <!-- ══════════════════════ HEADER -->
-  <header class="hdr">
-    <div class="brand">🚗 Drive<span>Buddy</span> &nbsp;<span style="font-weight:400;font-size:.78rem;color:rgba(255,255,255,.4)">Admin Dispatch</span></div>
-    <div style="display:flex;gap:.6rem;align-items:center">
-      <div class="hdr-badge hb-live"><div class="ldot ldot-g"></div>Live</div>
-      <div class="hdr-badge hb-admin">⚡ Admin</div>
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="logo-mark">
+    <svg width="36" height="36" viewBox="0 0 48 48"><use href="#logo-icon"/></svg>
+    <div class="logo-text">
+      <div class="logo-text-main">Drive<span>Buddy</span></div>
+      <div class="logo-text-sub">Premium Driver Services</div>
     </div>
-    <div class="hdr-stats">
-      <div class="hds"><div class="hds-n" id="hOnline">0</div><div class="hds-l">Online</div></div>
-      <div class="hds"><div class="hds-n" id="hPending">0</div><div class="hds-l">Pending</div></div>
-      <div class="hds"><div class="hds-n" id="hActive">0</div><div class="hds-l">Active</div></div>
-      <div class="hds"><div class="hds-n" id="hAlerts" style="color:#FCA5A5">0</div><div class="hds-l">Alerts</div></div>
-    </div>
-    <button onclick="loadAll()" style="margin-left:auto;background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.15);border-radius:9px;padding:.42rem .9rem;font-size:.75rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">↻ Refresh</button>
-  </header>
+  </a>
+  <div class="nav-links">
+    <a href="#why">Why Us</a><a href="#services">Services</a><a href="#pricing">Pricing</a><a href="#cities">Cities</a><a href="#faq">FAQ</a>
+    <a href="hire.html" style="color:var(--gold)">Drive With Us</a>
+  </div>
+  <div class="nav-actions">
+    <a href="tel:919111473929" class="nav-call">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+      9111473929
+    </a>
+    <div class="hamburger" id="hamburger" onclick="openMobMenu()"><span></span><span></span><span></span></div>
+  </div>
+</nav>
 
-  <!-- ══════════════════════ LEFT: BOOKINGS -->
-  <div class="sidebar">
-    <div class="panel-hdr">
-      <div class="panel-title">📋 Booking Requests <span class="badge chip-blue" id="bkCount">0</span></div>
+<!-- UBER-STYLE MOBILE MENU -->
+<div class="mob-overlay" id="mobOverlay" onclick="closeMobMenu()"></div>
+<div class="mob-menu" id="mobMenu">
+  <div class="mob-header">
+    <button class="mob-close-btn" onclick="closeMobMenu()">✕</button>
+    <div class="mob-avatar">D</div>
+    <div class="mob-header-name">DriveBuddy</div>
+    <div class="mob-header-sub">PREMIUM DRIVER SERVICES · CG</div>
+  </div>
+
+  <div class="mob-nav">
+    <!-- Main -->
+    <div class="mob-group-label">Navigation</div>
+
+    <div class="mob-nav-item" onclick="closeMobMenu();scrollTo({top:0,behavior:'smooth'})">
+      <div class="mob-nav-icon">🏠</div>
+      <div class="mob-nav-text">
+        <div class="mob-nav-label">Home</div>
+      </div>
+      <span class="mob-nav-arrow">›</span>
+    </div>
+
+    <div class="mob-nav-item" onclick="closeMobMenu();document.getElementById('services').scrollIntoView({behavior:'smooth'})">
+      <div class="mob-nav-icon">🚗</div>
+      <div class="mob-nav-text">
+        <div class="mob-nav-label">Services</div>
+        <div class="mob-nav-desc">Personal · Medical · Night · Airport</div>
+      </div>
+      <span class="mob-nav-arrow">›</span>
+    </div>
+
+    <div class="mob-nav-item" onclick="closeMobMenu();document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">
+      <div class="mob-nav-icon">💰</div>
+      <div class="mob-nav-text">
+        <div class="mob-nav-label">Pricing</div>
+        <div class="mob-nav-desc">Starting from ₹300</div>
+      </div>
+      <span class="mob-nav-arrow">›</span>
+    </div>
+
+    <div class="mob-nav-item" onclick="closeMobMenu();document.getElementById('cities').scrollIntoView({behavior:'smooth'})">
+      <div class="mob-nav-icon">📍</div>
+      <div class="mob-nav-text">
+        <div class="mob-nav-label">Cities</div>
+        <div class="mob-nav-desc">Raipur · Bhilai · Durg · Bilaspur</div>
+      </div>
+      <span class="mob-nav-arrow">›</span>
+    </div>
+
+    <div class="mob-nav-item" onclick="closeMobMenu();document.getElementById('reviews').scrollIntoView({behavior:'smooth'})">
+      <div class="mob-nav-icon">⭐</div>
+      <div class="mob-nav-text">
+        <div class="mob-nav-label">Reviews</div>
+        <div class="mob-nav-desc">4.9★ from 500+ customers</div>
+      </div>
+      <span class="mob-nav-arrow">›</span>
+    </div>
+
+    <div class="mob-nav-item" onclick="closeMobMenu();document.getElementById('faq').scrollIntoView({behavior:'smooth'})">
+      <div class="mob-nav-icon">❓</div>
+      <div class="mob-nav-text">
+        <div class="mob-nav-label">FAQ</div>
+      </div>
+      <span class="mob-nav-arrow">›</span>
+    </div>
+
+    <div class="mob-divider"></div>
+    <div class="mob-group-label">Drivers</div>
+
+    <div class="mob-nav-item gold-nav" onclick="window.location.href='hire.html'">
+      <div class="mob-nav-icon">🚘</div>
+      <div class="mob-nav-text">
+        <div class="mob-nav-label">Drive With Us</div>
+        <div class="mob-nav-desc">Earn ₹18k–22k/month</div>
+      </div>
+      <span class="mob-nav-arrow">›</span>
+    </div>
+
+    <div class="mob-divider"></div>
+    <div class="mob-group-label">Support</div>
+
+    <div class="mob-nav-item" onclick="closeMobMenu();setTimeout(()=>document.getElementById('aiFab').click(),300)">
+      <div class="mob-nav-icon">🤖</div>
+      <div class="mob-nav-text">
+        <div class="mob-nav-label">AI Assistant</div>
+        <div class="mob-nav-desc">Ask anything, 24/7</div>
+      </div>
+      <span class="mob-nav-arrow">›</span>
+    </div>
+  </div>
+
+  <div class="mob-footer">
+    <a href="tel:919111473929" class="mob-call-btn">📞 Call to Book — 9111473929</a>
+    <a href="https://wa.me/919111473929" class="mob-wa-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M5.455 23l.582-3.436A10.892 10.892 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10a10.892 10.892 0 01-6.545-2.145L1 23l4.455-.001z"/></svg>
+      WhatsApp Us
+    </a>
+  </div>
+</div>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap" style="margin-top:65px">
+  <div class="marquee-track">
+    <span class="marquee-item">🛡️ Police Verified Drivers<span class="marquee-dot"></span></span>
+    <span class="marquee-item">⚡ 30-Minute Arrival<span class="marquee-dot"></span></span>
+    <span class="marquee-item">🚫 Zero Alcohol Policy<span class="marquee-dot"></span></span>
+    <span class="marquee-item">⭐ 4.9 Star Rated<span class="marquee-dot"></span></span>
+    <span class="marquee-item">📞 Call 9111473929<span class="marquee-dot"></span></span>
+    <span class="marquee-item">🌙 Available 24×7<span class="marquee-dot"></span></span>
+    <span class="marquee-item">🏙️ Raipur · Bhilai · Durg · Bilaspur<span class="marquee-dot"></span></span>
+    <span class="marquee-item">🛡️ Police Verified Drivers<span class="marquee-dot"></span></span>
+    <span class="marquee-item">⚡ 30-Minute Arrival<span class="marquee-dot"></span></span>
+    <span class="marquee-item">🚫 Zero Alcohol Policy<span class="marquee-dot"></span></span>
+    <span class="marquee-item">⭐ 4.9 Star Rated<span class="marquee-dot"></span></span>
+    <span class="marquee-item">📞 Call 9111473929<span class="marquee-dot"></span></span>
+    <span class="marquee-item">🌙 Available 24×7<span class="marquee-dot"></span></span>
+    <span class="marquee-item">🏙️ Raipur · Bhilai · Durg · Bilaspur<span class="marquee-dot"></span></span>
+  </div>
+</div>
+
+<!-- HERO -->
+<div style="background:var(--ink)">
+  <div class="hero">
+    <canvas id="heroCanvas"></canvas>
+    <div class="hero-left reveal">
+      <div class="h-eyebrow"><span class="live"></span>Drivers Available · 30-Minute Response</div>
+      <h1 class="hero-h1">Your car.<br><em>Our driver.</em><br><span class="thin">Your peace of mind.</span></h1>
+      <p class="hero-p">Background-verified, sober professionals at your doorstep in under 30 minutes. Chhattisgarh's first and most trusted driver-on-demand platform.</p>
+      <div class="trust-row">
+        <div class="t-chip"><span class="tk">✓</span>Police Verified</div>
+        <div class="t-chip"><span class="tk">✓</span>Zero Alcohol</div>
+        <div class="t-chip"><span class="tk">✓</span>5+ Yrs Experience</div>
+        <div class="t-chip"><span class="tk">✓</span>24 × 7</div>
+      </div>
+      <div class="hero-btns">
+        <a href="tel:919111473929" class="btn btn-primary mag-btn">📞 Call to Book</a>
+        <a href="https://wa.me/919111473929" class="btn btn-ghost mag-btn">WhatsApp →</a>
+      </div>
+    </div>
+
+    <div class="book-card reveal d2" id="bookCard">
+      <div id="bookFormWrap">
+        <div class="bc-title">Book a Driver</div>
+        <div class="bc-sub">Saved securely · <strong>⚡️ We'll contact you shortly</strong></div>
+        <form id="bookingForm" novalidate>
+          <div class="field-row">
+            <div class="field">
+              <label>Pickup Location</label>
+              <span class="field-icon">📍</span>
+              <input type="text" name="pickup" id="f_pickup" placeholder="Your address / area" required>
+              <div class="field-err" id="e_pickup">Please enter pickup location</div>
+            </div>
+            <div class="field">
+              <label>Destination</label>
+              <span class="field-icon">🎯</span>
+              <input type="text" name="destination" id="f_drop" placeholder="Where to? (optional)">
+            </div>
+          </div>
+          <div class="field">
+            <label>Service Package</label>
+            <span class="field-icon">⏱</span>
+            <select name="package" id="f_pkg" required>
+              <option value="">Select a package</option>
+              <option value="1 Hour — ₹300">1 Hour — ₹300</option>
+              <option value="3 Hours — ₹600 (Most Popular)">3 Hours — ₹600 · Most Popular</option>
+              <option value="Local Full Day — ₹1000–1200">Local Full Day (8 hrs) — ₹1000–1200</option>
+              <option value="Outstation — ₹1200–1500">Outstation Trip — ₹1200–1500</option>
+              <option value="Night Driver (8PM–6AM) — ₹500">Night Driver (8 PM – 6 AM) — ₹500</option>
+              <option value="Hospital / Emergency">Hospital / Emergency — Priority</option>
+            </select>
+            <div class="field-err" id="e_pkg">Please select a package</div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Your Name</label>
+              <span class="field-icon">👤</span>
+              <input type="text" name="name" id="f_name" placeholder="Full name" required>
+              <div class="field-err" id="e_name">Please enter your name</div>
+            </div>
+            <div class="field">
+              <label>Mobile Number</label>
+              <span class="field-icon">📱</span>
+              <input type="tel" name="phone" id="f_phone" placeholder="10-digit number" maxlength="10" required>
+              <div class="field-err" id="e_phone">Valid 10-digit number required</div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Preferred Date &amp; Time</label>
+            <span class="field-icon">📅</span>
+            <input type="datetime-local" name="datetime" id="f_dt">
+          </div>
+          <div class="field">
+            <label>Additional Notes (optional)</label>
+            <span class="field-icon">💬</span>
+            <textarea name="notes" id="f_notes" rows="2" placeholder="Any special requirements…"></textarea>
+          </div>
+          <button type="submit" class="submit-btn" id="submitBtn">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            Confirm Booking Request
+          </button>
+        </form>
+        <div class="or-divider">or</div>
+        <a class="wa-alt" href="https://wa.me/919111473929" target="_blank" onclick="this.href='https://wa.me/919111473929?text='+encodeURIComponent(buildWAMsg())">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M5.455 23l.582-3.436A10.892 10.892 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10a10.892 10.892 0 01-6.545-2.145L1 23l4.455-.001z"/></svg>
+          Book instantly via WhatsApp instead
+        </a>
+        <p class="form-note">🔒 Your details are saved securely in our system</p>
+      </div>
+      <div class="book-success" id="bookSuccess">
+        <div class="si">✅</div>
+        <h3>Booking Received!</h3>
+        <p>Thank you! Our team will call you on <strong id="successPhone" style="color:var(--cream)"></strong> within a few minutes to confirm your driver.<br><br>For urgent bookings, call us directly:</p>
+        <a href="tel:919111473929" class="btn btn-primary" style="margin-top:1rem;width:100%;justify-content:center">📞 9111473929</a>
+        <a class="wa-follow" href="#" id="waFollowBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M5.455 23l.582-3.436A10.892 10.892 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10a10.892 10.892 0 01-6.545-2.145L1 23l4.455-.001z"/></svg>
+          Also send via WhatsApp
+        </a>
+        <p style="margin-top:1.2rem;font-size:0.72rem;color:var(--cream-25);font-family:var(--mono);cursor:pointer" onclick="resetForm()">← Make another booking</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="gem-divider"><div class="gem-line"></div><div class="gem-dot"></div><div class="gem-line"></div></div>
+
+<!-- WHY US -->
+<section id="why" class="why-bg">
+  <div class="s-inner">
+    <div class="why-header">
+      <div><div class="s-label">Our Promise</div><h2 class="s-h reveal">Why families<br><em>trust us</em></h2></div>
+      <p class="s-p reveal">Every driver passes a rigorous 4-stage verification before they ever touch your steering wheel.</p>
+    </div>
+    <div class="why-grid">
+      <div class="why-card reveal"><div class="wc-num">01</div><div class="wc-ico">🛡️</div><h3>Police Verified</h3><p>Government ID and criminal background check. Documents verified. Zero exceptions, every time.</p></div>
+      <div class="why-card reveal d1"><div class="wc-num">02</div><div class="wc-ico">🚫</div><h3>Zero Alcohol Policy</h3><p>Breathalyzer before every single shift. Any violation means a permanent, lifetime ban from our platform.</p></div>
+      <div class="why-card reveal d2"><div class="wc-num">03</div><div class="wc-ico">🎓</div><h3>Professionally Trained</h3><p>Defensive driving, first aid, and customer service certification mandatory before onboarding.</p></div>
+      <div class="why-card reveal d3"><div class="wc-num">04</div><div class="wc-ico">⭐</div><h3>5+ Years Experience</h3><p>Minimum five years professional driving required. Your local routes, perfectly mastered.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-strip">
+  <div class="stats-inner">
+    <div class="stat-item reveal"><div class="stat-n" data-target="500">0</div><div class="stat-l">Happy Families</div></div>
+    <div class="stat-item reveal d1"><div class="stat-n">24/7</div><div class="stat-l">Always Available</div></div>
+    <div class="stat-item reveal d2"><div class="stat-n" data-target="30">0</div><div class="stat-l">Min Response</div></div>
+    <div class="stat-item reveal d3"><div class="stat-n">4.9★</div><div class="stat-l">Average Rating</div></div>
+  </div>
+</div>
+
+<!-- SERVICES -->
+<section id="services" class="srv-bg">
+  <div class="s-inner">
+    <div class="srv-header">
+      <div><div class="s-label">What We Offer</div><h2 class="s-h reveal">Every journey,<br><em>covered</em></h2></div>
+      <p class="s-p reveal">From school runs to late-night office returns — the right driver for every need.</p>
+    </div>
+    <div class="srv-grid">
+      <div class="srv-card reveal"><div class="srv-ico">🚗</div><div class="srv-info"><h3>Personal Driver</h3><p>Your car, our driver — for errands, shopping, school runs, or daily commute. You stay in control of your vehicle.</p><span class="srv-tag">MOST BOOKED</span></div></div>
+      <div class="srv-card reveal d1"><div class="srv-ico">🏥</div><div class="srv-info"><h3>Medical Transport</h3><p>Hospital visits, clinic appointments and emergency transfers with calm patience and care for your family.</p><span class="srv-tag">24/7 PRIORITY</span></div></div>
+      <div class="srv-card reveal d2"><div class="srv-ico">🌙</div><div class="srv-info"><h3>Night Safety Driver</h3><p>Safe, verified late-night travel for women, families, and office returnees. Reliable, trusted, always on time.</p><span class="srv-tag">POPULAR CHOICE</span></div></div>
+      <div class="srv-card reveal d3"><div class="srv-ico">✈️</div><div class="srv-info"><h3>Airport &amp; Outstation</h3><p>Pickup, drop, and meet-and-greet with real-time flight tracking. Long-distance trips with experienced drivers.</p><span class="srv-tag">FLIGHT TRACKED</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing" class="pricing-bg">
+  <div class="s-inner">
+    <div style="text-align:center">
+      <div class="s-label" style="justify-content:center">Transparent Pricing</div>
+      <h2 class="s-h reveal" style="text-align:center">Simple, <em>honest</em> rates</h2>
+      <p class="s-p reveal" style="margin:0.9rem auto 0;text-align:center">No hidden charges, no surge pricing. What you see is what you pay.</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="pc reveal"><div class="pc-badge">STARTER</div><div class="pc-name">1 Hour</div><div class="pc-desc">Quick trips, short errands &amp; pickups</div><div class="pc-price"><span class="pc-amt">₹300</span><span class="pc-per">/ booking</span></div><ul class="pc-features"><li>Up to 1 hour of driving</li><li>Police-verified driver</li><li>30-min arrival guarantee</li><li>Your own vehicle</li></ul><button class="pc-btn pc-btn-outline" onclick="scrollToBook('1 Hour — ₹300')">Book Now →</button></div>
+      <div class="pc featured reveal d1"><div class="pc-badge">⭐ MOST POPULAR</div><div class="pc-name">3 Hours</div><div class="pc-desc">Best value for daily use and outings</div><div class="pc-price"><span class="pc-amt">₹600</span><span class="pc-per">/ booking</span></div><ul class="pc-features"><li>Up to 3 hours of driving</li><li>Police-verified driver</li><li>30-min arrival guarantee</li><li>Your own vehicle</li><li>Priority assignment</li></ul><button class="pc-btn pc-btn-gold" onclick="scrollToBook('3 Hours — ₹600 (Most Popular)')">Book Now →</button></div>
+      <div class="pc reveal d2"><div class="pc-badge">FULL DAY</div><div class="pc-name">Local</div><div class="pc-desc">All-day local errands &amp; city trips</div><div class="pc-price"><span class="pc-amt-range">₹1000–1200</span><span class="pc-per">/ day</span></div><ul class="pc-features"><li>8 hours dedicated driving</li><li>Senior verified driver</li><li>30-min arrival guarantee</li><li>Your own vehicle</li><li>Break coverage included</li></ul><button class="pc-btn pc-btn-outline" onclick="scrollToBook('Local Full Day — ₹1000–1200')">Book Now →</button></div>
+      <div class="pc reveal d3"><div class="pc-badge">OUTSTATION</div><div class="pc-name">Outstation</div><div class="pc-desc">Long-distance trips beyond the city</div><div class="pc-price"><span class="pc-amt-range">₹1200–1500</span><span class="pc-per">/ trip</span></div><ul class="pc-features"><li>Long-distance driving</li><li>Highway-experienced driver</li><li>Night halts on request</li><li>Your own vehicle</li><li>Custom quote available</li></ul><button class="pc-btn pc-btn-outline" onclick="scrollToBook('Outstation — ₹1200–1500')">Book Now →</button></div>
+    </div>
+    <p style="text-align:center;margin-top:1.8rem;font-size:0.8rem;color:var(--cream-25);font-family:var(--mono)">Night driver (8pm–6am) — ₹500 &nbsp;·&nbsp; Hospital / Emergency — call for priority dispatch</p>
+  </div>
+</section>
+
+<!-- REVIEWS -->
+<section id="reviews" class="rev-bg">
+  <div class="s-inner">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:2rem">
+      <div><div class="s-label">Happy Clients</div><h2 class="s-h reveal">What families<br><em>say about us</em></h2></div>
+      <p class="s-p reveal">Real reviews from real customers across Chhattisgarh.</p>
+    </div>
+    <div class="rev-grid">
+      <div class="rev-card reveal"><div class="stars">★★★★★</div><p class="rev-text">"Driver arrived in under 25 minutes. Polite, sober, and drove perfectly. My elderly mother felt completely safe the entire time. Will definitely book again!"</p><div class="rev-by"><div class="rev-av">R</div><div><div class="rev-name">Ramesh Sahu</div><div class="rev-loc">📍 Raipur</div></div></div></div>
+      <div class="rev-card reveal d1"><div class="stars">★★★★★</div><p class="rev-text">"Perfect for hospital visits with elderly parents. The driver waited patiently for three hours without a single complaint. Truly professional service worth every rupee."</p><div class="rev-by"><div class="rev-av">A</div><div><div class="rev-name">Anjali Mishra</div><div class="rev-loc">📍 Bhilai</div></div></div></div>
+      <div class="rev-card reveal d2"><div class="stars">★★★★★</div><p class="rev-text">"Airport pickup was seamless — the driver tracked my flight and was waiting before I even exited arrivals. Family travel has never been this stress-free!"</p><div class="rev-by"><div class="rev-av">P</div><div><div class="rev-name">Priya Khanna</div><div class="rev-loc">📍 Durg</div></div></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="gem-divider"><div class="gem-line"></div><div class="gem-dot"></div><div class="gem-line"></div></div>
+
+<!-- CITIES -->
+<section id="cities" class="cities-bg">
+  <div class="s-inner">
+    <div style="text-align:center">
+      <div class="s-label" style="justify-content:center">Service Area</div>
+      <h2 class="s-h reveal" style="text-align:center">We come to <em>you</em></h2>
+      <p class="s-p reveal" style="margin:0.9rem auto 0;text-align:center">Covering Chhattisgarh's major cities with verified drivers ready around the clock.</p>
+    </div>
+    <div class="cities-grid">
+      <div class="city-card reveal"><span class="city-em">🏢</span><div class="city-name">Raipur</div><p class="city-d">State capital HQ — Airport, Railway Station, all major hospitals and neighbourhoods covered.</p><span class="city-tag">HEADQUARTERS</span></div>
+      <div class="city-card reveal d1"><span class="city-em">🏭</span><div class="city-name">Bhilai</div><p class="city-d">Full industrial &amp; residential coverage across the Steel City, around the clock.</p><span class="city-tag">FULL COVERAGE</span></div>
+      <div class="city-card reveal d2"><span class="city-em">🏙️</span><div class="city-name">Durg</div><p class="city-d">Complete coverage of all wards, markets, and institutions across Durg city.</p><span class="city-tag">FULL COVERAGE</span></div>
+      <div class="city-card reveal d3"><span class="city-em">🏛️</span><div class="city-name">Bilaspur</div><p class="city-d">University campuses, medical hubs, and all residential colonies covered.</p><span class="city-tag">FULL COVERAGE</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="faq-bg">
+  <div class="s-inner">
+    <div style="text-align:center">
+      <div class="s-label" style="justify-content:center">Got Questions?</div>
+      <h2 class="s-h reveal" style="text-align:center">Frequently <em>asked</em></h2>
+    </div>
+    <div class="faq-grid">
       <div>
-        <span class="refresh-badge" onclick="loadBookings()">↻</span>
+        <div class="faq-item open"><div class="faq-q" onclick="toggleFaq(this)">How quickly will a driver arrive?<span class="faq-arrow">▼</span></div><div class="faq-a">We guarantee a driver at your location within 30 minutes anywhere in Raipur, Bhilai, Durg, or Bilaspur. In most cases drivers arrive even faster — often 15–20 minutes.</div></div>
+        <div class="faq-item" style="margin-top:0.7rem"><div class="faq-q" onclick="toggleFaq(this)">Is the service available at night?<span class="faq-arrow">▼</span></div><div class="faq-a">Absolutely. DriveBuddy operates 24 hours, 7 days a week including all public holidays. Our night safety driver service (8 PM – 6 AM) is popular with women, families, and late-night office commuters.</div></div>
+        <div class="faq-item" style="margin-top:0.7rem"><div class="faq-q" onclick="toggleFaq(this)">Difference between Local and Outstation?<span class="faq-arrow">▼</span></div><div class="faq-a">Local (₹1000–1200) covers full-day city driving within Raipur, Bhilai, Durg or Bilaspur. Outstation (₹1200–1500) is for travel beyond city limits — call 9111473929 for a custom quote.</div></div>
+        <div class="faq-item" style="margin-top:0.7rem"><div class="faq-q" onclick="toggleFaq(this)">What if I need to extend my booking?<span class="faq-arrow">▼</span></div><div class="faq-a">You can extend directly with the driver or by calling us. Extension charges are per-hour. The driver stays with you until the job is done — no rushing.</div></div>
+      </div>
+      <div>
+        <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">How are drivers verified?<span class="faq-arrow">▼</span></div><div class="faq-a">Every driver completes a 4-stage verification: Government ID, police background check, breathalyzer before every shift, and 5+ years professional driving experience. We conduct periodic re-verification.</div></div>
+        <div class="faq-item" style="margin-top:0.7rem"><div class="faq-q" onclick="toggleFaq(this)">What payment methods do you accept?<span class="faq-arrow">▼</span></div><div class="faq-a">We accept Cash, UPI (GPay, PhonePe, Paytm), and bank transfer. Simple and transparent — zero hidden charges whatsoever.</div></div>
+        <div class="faq-item" style="margin-top:0.7rem"><div class="faq-q" onclick="toggleFaq(this)">Can I book for hospital emergencies?<span class="faq-arrow">▼</span></div><div class="faq-a">Yes — medical and emergency bookings are our absolute priority. Call 9111473929 immediately. We dispatch the nearest available driver as fast as possible, any hour of day or night.</div></div>
+        <div class="faq-item" style="margin-top:0.7rem"><div class="faq-q" onclick="toggleFaq(this)">How does the online booking form work?<span class="faq-arrow">▼</span></div><div class="faq-a">Fill in your details and submit — your booking request is saved directly to our system. We will call you within minutes to confirm your driver.</div></div>
       </div>
     </div>
-    <div class="panel-body" id="bookingsList">
-      <div class="empty-s">📭 No bookings yet.<br>Form submissions from your website<br>appear here automatically.</div>
-    </div>
-    <!-- Manual add for testing -->
-    <div style="padding:.75rem .85rem;border-top:1px solid var(--border)">
-      <button class="fb-btn" onclick="showAddBookingModal()">+ Add Test Booking</button>
-    </div>
   </div>
+</section>
 
-  <!-- ══════════════════════ CENTER: LIVE MAP -->
-  <div class="map-center">
-    <canvas id="liveMap"></canvas>
-    <div class="map-overlay">
-      <div class="map-chip">🗺️ Raipur, Chhattisgarh · Live</div>
-      <div class="map-chip" id="mapStatusChip">⚪ Select a booking to track</div>
-    </div>
-    <div class="map-ctrl">
-      <div class="mc" onclick="zoom(1.2)" title="Zoom in">+</div>
-      <div class="mc" onclick="zoom(.83)" title="Zoom out">−</div>
-      <div class="mc" onclick="resetView()" title="Reset">⊙</div>
-    </div>
-    <div class="map-legend">
-      <div class="leg-row"><div class="leg-dot" style="background:#1D4ED8"></div>Available Driver</div>
-      <div class="leg-row"><div class="leg-dot" style="background:#059669"></div>On Trip</div>
-      <div class="leg-row"><div class="leg-dot" style="background:#DC2626"></div>User/Pickup</div>
-      <div class="leg-row"><div class="leg-dot" style="background:#D97706"></div>Alert / Offline</div>
-    </div>
-  </div>
-
-  <!-- ══════════════════════ RIGHT: TRACKING + ROSTER -->
-  <div class="right-panel">
-
-    <!-- LIVE TRACKING -->
-    <div class="track-box">
-      <div class="panel-hdr">
-        <div class="panel-title">📍 Live Tracking</div>
-        <div class="chip chip-blue" id="trackChip">No Active Ride</div>
+<!-- DRIVE WITH US -->
+<section class="drive-with-us" id="drive-with-us">
+  <div class="dwu-inner s-inner">
+    <div>
+      <div class="s-label">For Drivers</div>
+      <h2 class="s-h reveal">Earn well.<br><em>Drive proud.</em></h2>
+      <p class="s-p reveal" style="margin:1rem 0">Join Chhattisgarh's most trusted driver network. Flexible hours, steady income, and a team that values your professionalism.</p>
+      <div class="dwu-perks">
+        <div class="dwu-perk reveal"><div class="dwu-perk-ico">💰</div><h4>Steady Income</h4><p>Daily bookings, transparent pay, no middlemen cutting your earnings.</p></div>
+        <div class="dwu-perk reveal d1"><div class="dwu-perk-ico">🕐</div><h4>Flexible Hours</h4><p>Work when you want. Morning, evening, or night shifts — you choose.</p></div>
+        <div class="dwu-perk reveal d2"><div class="dwu-perk-ico">🛡️</div><h4>Safe Work</h4><p>Verified customers, no cash handling disputes, full support from our team.</p></div>
+        <div class="dwu-perk reveal d3"><div class="dwu-perk-ico">📈</div><h4>Grow With Us</h4><p>As we expand to more cities, senior drivers get first priority for premium bookings.</p></div>
       </div>
-      <div class="track-content" id="trackContent">
-        <div class="track-empty">
-          👆 Assign a driver to a booking to see live GPS tracking here.
+      <div class="dwu-cta-row">
+        <a href="hire.html" class="btn btn-primary mag-btn" style="font-size:0.95rem;padding:1rem 2.2rem">🚘 Apply to Drive</a>
+        <a href="tel:919111473929" class="btn-gold-outline">📞 Call Us First</a>
+      </div>
+    </div>
+    <div class="dwu-right reveal d2">
+      <div class="dwu-badge">✅ Now Hiring</div>
+      <div class="driver-card">
+        <div class="driver-avatar-row">
+          <div class="driver-av">M</div>
+          <div>
+            <div class="driver-info-name">Mahesh Yadav</div>
+            <div class="driver-info-meta"><span>Raipur</span> · <span>3 yrs with DriveBuddy</span><span class="badge">⭐ 4.9</span></div>
+          </div>
+        </div>
+        <p class="driver-quote">"DriveBuddy changed my life. I earn ₹18,000–22,000 a month with flexible hours. The customers are respectful and the team always supports us."</p>
+        <div class="driver-stats">
+          <div><div class="driver-stat-n">1,240+</div><div class="driver-stat-l">TRIPS DONE</div></div>
+          <div><div class="driver-stat-n">₹20k</div><div class="driver-stat-l">AVG MONTHLY</div></div>
+          <div><div class="driver-stat-n">4.9★</div><div class="driver-stat-l">RATING</div></div>
         </div>
       </div>
     </div>
-
-    <!-- ALERTS -->
-    <div style="flex-shrink:0">
-      <div class="panel-hdr">
-        <div class="panel-title">🚨 Alert Log <span class="badge chip-red" id="alertCount">0</span></div>
-        <span class="refresh-badge" onclick="document.getElementById('alertsList').innerHTML=''">Clear</span>
-      </div>
-      <div id="alertsList" style="max-height:140px;overflow-y:auto">
-        <div class="empty-s" style="padding:.9rem">No alerts yet.</div>
-      </div>
-    </div>
-
-    <!-- DRIVER ROSTER -->
-    <div class="panel-hdr" style="flex-shrink:0">
-      <div class="panel-title">👥 Driver Roster <span class="badge chip-green" id="drvCount">0</span></div>
-      <span class="refresh-badge" onclick="loadDrivers()">↻</span>
-    </div>
-    <div style="flex:1;overflow-y:auto" id="driversList">
-      <div class="empty-s">No drivers registered yet.<br>Drivers will appear here when they register via the Driver App.</div>
-    </div>
-
   </div>
+</section>
 
-</div>
-
-<!-- ADD BOOKING MODAL (Test) -->
-<div id="addModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center">
-  <div style="background:white;border-radius:18px;padding:1.5rem;width:380px;max-width:calc(100vw - 2rem);box-shadow:0 24px 60px rgba(0,0,0,.25)">
-    <div style="font-family:'Sora',sans-serif;font-size:1rem;font-weight:700;margin-bottom:1rem">Add Test Booking</div>
-    <div style="display:grid;gap:.7rem">
-      <input type="text" id="mb_name" placeholder="Customer Name" style="background:var(--surf);border:1.5px solid var(--border);border-radius:10px;padding:.75rem .9rem;font-family:'DM Sans',sans-serif;outline:none;font-size:.85rem;width:100%">
-      <input type="tel" id="mb_phone" placeholder="Phone (10 digits)" maxlength="10" style="background:var(--surf);border:1.5px solid var(--border);border-radius:10px;padding:.75rem .9rem;font-family:'DM Sans',sans-serif;outline:none;font-size:.85rem;width:100%">
-      <input type="text" id="mb_pickup" placeholder="Pickup Location" style="background:var(--surf);border:1.5px solid var(--border);border-radius:10px;padding:.75rem .9rem;font-family:'DM Sans',sans-serif;outline:none;font-size:.85rem;width:100%">
-      <input type="text" id="mb_drop" placeholder="Destination (optional)" style="background:var(--surf);border:1.5px solid var(--border);border-radius:10px;padding:.75rem .9rem;font-family:'DM Sans',sans-serif;outline:none;font-size:.85rem;width:100%">
-      <select id="mb_pkg" style="background:var(--surf);border:1.5px solid var(--border);border-radius:10px;padding:.75rem .9rem;font-family:'DM Sans',sans-serif;outline:none;font-size:.85rem;width:100%;appearance:none">
-        <option>1 Hour — ₹300</option>
-        <option selected>3 Hours — ₹600</option>
-        <option>Full Day — ₹1000</option>
-        <option>Outstation — ₹1200</option>
-        <option>Night Driver — ₹500</option>
-        <option>Hospital / Emergency</option>
-      </select>
-    </div>
-    <div style="display:flex;gap:.6rem;margin-top:1rem">
-      <button onclick="hideModal()" style="flex:1;background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:.8rem;font-family:'Sora',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer">Cancel</button>
-      <button onclick="addTestBooking()" style="flex:2;background:var(--blue);color:white;border:none;border-radius:10px;padding:.8rem;font-family:'Sora',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer">Add Booking</button>
+<!-- CTA -->
+<section class="cta-bg">
+  <div class="cta-inner">
+    <div class="s-label" style="justify-content:center">Book Now</div>
+    <h2 class="cta-h reveal">Ready for a <em>safe ride?</em></h2>
+    <p class="cta-p reveal">Call or WhatsApp — a verified driver arrives in 30 minutes or less, anywhere in our cities.</p>
+    <div class="cta-row reveal">
+      <a href="tel:919111473929" class="btn btn-primary mag-btn" style="font-size:0.97rem;padding:1rem 2.4rem">📞 9111473929</a>
+      <a href="https://wa.me/919111473929" class="btn-wa mag-btn">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M5.455 23l.582-3.436A10.892 10.892 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10a10.892 10.892 0 01-6.545-2.145L1 23l4.455-.001z"/></svg>
+        WhatsApp Us
+      </a>
     </div>
   </div>
+</section>
+
+<footer>
+  <div class="ft-inner">
+    <div class="ft-brand">
+      <a href="#" class="logo-mark">
+        <svg width="32" height="32" viewBox="0 0 48 48"><use href="#logo-icon"/></svg>
+        <div class="logo-text"><div class="logo-text-main">Drive<span>Buddy</span></div><div class="logo-text-sub">Premium Driver Services</div></div>
+      </a>
+      <p>Chhattisgarh's first driver-on-demand platform. We solve the problem of having a car but no trusted driver — every single day, 24×7.</p>
+      <div class="ft-contacts">
+        <a href="tel:919111473929">📞 9111473929</a>
+        <a href="tel:919893302783">📞 9893302783</a>
+        <a href="mailto:nihalchandrakar70@gmail.com">✉️ nihalchandrakar70@gmail.com</a>
+      </div>
+    </div>
+    <div class="ft-col"><h4>Services</h4><ul><li><a href="#services">Personal Driver</a></li><li><a href="#services">Medical Transport</a></li><li><a href="#services">Night Safety</a></li><li><a href="#services">Airport Service</a></li><li><a href="#services">Outstation Driver</a></li></ul></div>
+    <div class="ft-col"><h4>Cities</h4><ul><li><a href="#cities">Raipur</a></li><li><a href="#cities">Bhilai</a></li><li><a href="#cities">Durg</a></li><li><a href="#cities">Bilaspur</a></li></ul></div>
+    <div class="ft-col"><h4>Company</h4><ul><li><a href="#why">Why Us</a></li><li><a href="#reviews">Reviews</a></li><li><a href="#faq">FAQ</a></li><li><a href="#pricing">Pricing</a></li><li><a href="hire.html">Drive With Us</a></li></ul></div>
+  </div>
+  <div class="ft-bottom">
+    <p>© 2026 DriveBuddy. All rights reserved. Chhattisgarh's first driver-on-demand platform.</p>
+    <div class="ft-cities">RAIPUR · BHILAI · DURG · BILASPUR</div>
+  </div>
+</footer>
+
+<!-- AI FAB -->
+<button class="ai-fab" id="aiFab" onclick="toggleChat()" title="Chat with DriveBuddy AI">
+  <svg width="28" height="28" viewBox="0 0 48 48"><use href="#logo-icon"/></svg>
+  <div class="fab-ai">AI</div>
+</button>
+
+<!-- CHAT PANEL -->
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-hd">
+    <div class="chat-av"><svg width="22" height="22" viewBox="0 0 48 48"><use href="#logo-icon"/></svg><div class="chat-dot"></div></div>
+    <div style="flex:1">
+      <div class="chat-info-name">DriveBuddy AI <span class="chat-badge">VERIFIED</span></div>
+      <div class="chat-status">Online · Powered by Claude AI</div>
+    </div>
+    <button class="chat-close-btn" onclick="toggleChat()">✕ Close</button>
+  </div>
+  <div class="chat-msgs" id="chatMsgs">
+    <div class="msg-wrap bot-wrap">
+      <div class="mini-av"><svg width="14" height="14" viewBox="0 0 48 48"><use href="#logo-icon"/></svg></div>
+      <div>
+        <div class="msg bot">👋 Namaste! I'm the <strong>DriveBuddy AI</strong>. Ask me anything about our services, pricing, cities, or how to book a driver!</div>
+        <div class="msg-time" id="initTime"></div>
+      </div>
+    </div>
+  </div>
+  <div class="chat-quick" id="quickBtns">
+    <button class="qb" onclick="sendQuick('How do I book a driver?')">📅 Book</button>
+    <button class="qb" onclick="sendQuick('What are the prices?')">💰 Pricing</button>
+    <button class="qb" onclick="sendQuick('Which cities do you cover?')">📍 Cities</button>
+    <button class="qb" onclick="sendQuick('Night service available?')">🌙 Night</button>
+    <button class="qb" onclick="sendQuick('How to become a driver?')">🚘 Join</button>
+  </div>
+  <div class="chat-input-row">
+    <textarea class="chat-inp" id="chatInp" rows="1" placeholder="Ask anything…" oninput="autoResize(this)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea>
+    <button class="chat-send" id="chatSend" onclick="sendMsg()"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+  </div>
+  <div class="chat-powered">🤖 Powered by Claude AI · DriveBuddy © 2026</div>
 </div>
 
 <script>
-// ══════════════════════════════════════ FIREBASE CONFIG
-// 🔧 SAME CONFIG AS driver-app.html — paste your Firebase credentials here
+/* ── FIREBASE — NEW CONFIG ── */
 const firebaseConfig = {
   apiKey: "AIzaSyCIGiv764yafx3HsmmbwpQuolKQcm64Ulo",
   authDomain: "drive-buddy-acc4c.firebaseapp.com",
@@ -299,590 +999,229 @@ const firebaseConfig = {
   appId: "1:56159522240:web:d8454bea63494f064dcc25",
   measurementId: "G-SV0SKP5YFM"
 };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-let db = null;
-try {
-  if (typeof firebase !== 'undefined') {
-    firebase.initializeApp(FIREBASE_CONFIG);
-    db = firebase.database();
-  }
-} catch(e) { console.log('Firebase not loaded — local mode'); }
+/* ── SCROLL ── */
+window.addEventListener('scroll',()=>{
+  const p=(scrollY/(document.body.scrollHeight-innerHeight))*100;
+  document.getElementById('scrollBar').style.width=p+'%';
+  document.getElementById('nav').classList.toggle('scrolled',scrollY>50);
+},{passive:true});
 
-// ══════════════════════════════════════ STATE
-let bookings = [], drivers = [], alerts = [];
-let selectedBooking = null, activeTracking = null;
-let trackInterval = null, mapZoomF = 1;
+/* ── CURSOR GLOW ── */
+const cg=document.getElementById('cursorGlow');
+document.addEventListener('mousemove',e=>{cg.style.left=e.clientX+'px';cg.style.top=e.clientY+'px';cg.style.opacity='1';},{passive:true});
 
-// Demo drivers for when Firebase isn't connected
-const demoDrivers = [
-  {id:'DRV-D001',name:'Rakesh Kumar',phone:'9111000001',vehicle:'CG04AB1234',model:'Swift Dzire',city:'Raipur',status:'online',rating:4.9,location:{lat:21.2512,lng:81.6292,accuracy:8,updatedAt:new Date().toISOString()}},
-  {id:'DRV-D002',name:'Mahesh Singh',phone:'9111000002',vehicle:'CG04CD5678',model:'Wagon R',city:'Raipur',status:'online',rating:4.8,location:{lat:21.2551,lng:81.6340,accuracy:12,updatedAt:new Date().toISOString()}},
-  {id:'DRV-D003',name:'Amit Pandey',phone:'9111000003',vehicle:'CG04EF9012',model:'Alto K10',city:'Bhilai',status:'on_trip',rating:4.7,location:{lat:21.2488,lng:81.6378,accuracy:10,updatedAt:new Date().toISOString()}},
-  {id:'DRV-D004',name:'Suresh Kowre',phone:'9111000004',vehicle:'CG04GH3456',model:'Ertiga',city:'Durg',status:'offline',rating:4.9,location:null},
-];
-
-// ══════════════════════════════════════ MAP
-const canvas = document.getElementById('liveMap');
-const ctx = canvas.getContext('2d');
-let mapW, mapH;
-let animFrame;
-
-// Raipur bounding box approx
-const MAP_BOUNDS = { minLat:21.21, maxLat:21.30, minLng:81.58, maxLng:81.70 };
-
-function latLngToXY(lat, lng) {
-  const x = ((lng - MAP_BOUNDS.minLng) / (MAP_BOUNDS.maxLng - MAP_BOUNDS.minLng)) * mapW;
-  const y = (1 - (lat - MAP_BOUNDS.minLat) / (MAP_BOUNDS.maxLat - MAP_BOUNDS.minLat)) * mapH;
-  return { x, y };
+/* ── MOBILE MENU ── */
+function openMobMenu(){
+  document.getElementById('mobMenu').classList.add('open');
+  document.getElementById('mobOverlay').classList.add('open');
+  document.getElementById('hamburger').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeMobMenu(){
+  document.getElementById('mobMenu').classList.remove('open');
+  document.getElementById('mobOverlay').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+  document.body.style.overflow='';
 }
 
-function resizeCanvas() {
-  const c = canvas.parentElement;
-  canvas.width = mapW = c.clientWidth;
-  canvas.height = mapH = c.clientHeight;
+/* ── REVEAL ── */
+const revObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')})},{threshold:0.08,rootMargin:'0px 0px -30px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
+
+/* ── COUNTER ── */
+function countUp(el,target){
+  const isMin=el.closest('.stat-item').querySelector('.stat-l').textContent.includes('Min');
+  let n=0;const step=target/1800*16;
+  const id=setInterval(()=>{n=Math.min(n+step,target);el.textContent=Math.floor(n)+(isMin?'min':'+');if(n>=target)clearInterval(id)},16);
+}
+const cObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting&&e.target.dataset.target){countUp(e.target,+e.target.dataset.target);cObs.unobserve(e.target)}})},{threshold:0.5});
+document.querySelectorAll('[data-target]').forEach(el=>cObs.observe(el));
+
+/* ── FAQ ── */
+function toggleFaq(q){q.parentElement.classList.toggle('open')}
+
+/* ── SCROLL TO BOOK ── */
+function scrollToBook(pkg){
+  document.getElementById('f_pkg').value=pkg;
+  document.getElementById('bookCard').scrollIntoView({behavior:'smooth',block:'center'});
+  setTimeout(()=>document.getElementById('f_pickup').focus(),600);
 }
 
-function drawBaseMap() {
-  ctx.fillStyle = '#EEF2F7'; ctx.fillRect(0,0,mapW,mapH);
-  // Water
-  ctx.fillStyle = '#C8DEF0';
-  ctx.beginPath(); ctx.ellipse(.78*mapW,.72*mapH,.06*mapW,.04*mapH,0,0,Math.PI*2); ctx.fill();
-  // Parks
-  ctx.fillStyle = '#C8E6C8';
-  [[.55,.12,.09,.11],[.25,.68,.07,.09],[.76,.38,.05,.08]].forEach(([x,y,w,h])=>ctx.fillRect(x*mapW,y*mapH,w*mapW,h*mapH));
-  // City blocks
-  const b='#E8E4DC',d='#EAE6DE';
-  [[.04,.06,.14,.15,d],[.24,.06,.13,.12,b],[.43,.06,.1,.11,d],[.62,.06,.12,.15,b],[.78,.06,.18,.14,d],
-   [.04,.27,.12,.15,b],[.2,.27,.15,.16,d],[.42,.25,.11,.14,b],[.62,.27,.14,.14,d],[.8,.27,.15,.15,b],
-   [.04,.5,.14,.16,d],[.24,.5,.16,.15,b],[.47,.5,.15,.14,d],[.67,.5,.12,.16,b],[.83,.5,.13,.14,d],
-   [.04,.73,.18,.18,b],[.27,.73,.19,.2,d],[.52,.73,.16,.2,b],[.72,.75,.14,.18,d]].forEach(([x,y,w,h,c])=>{
-    ctx.fillStyle=c; ctx.fillRect(x*mapW,y*mapH,w*mapW,h*mapH);
+/* ── WA MSG ── */
+function buildWAMsg(){
+  const p=document.getElementById('f_pickup').value,d=document.getElementById('f_drop').value,pk=document.getElementById('f_pkg').value,n=document.getElementById('f_name').value,ph=document.getElementById('f_phone').value;
+  return `🚗 *DriveBuddy Booking*\n\n👤 Name: ${n||'Not entered'}\n📱 Phone: ${ph||'Not entered'}\n📍 Pickup: ${p||'Not entered'}\n🎯 Drop: ${d||'Not specified'}\n⏱ Package: ${pk||'Not selected'}\n\n_From DriveBuddy website_`;
+}
+
+/* ── RIPPLE ── */
+document.querySelectorAll('.btn,.submit-btn,.pc-btn,.mob-call-btn,.mob-wa-btn').forEach(btn=>{
+  btn.addEventListener('click',function(e){
+    const r=document.createElement('span');r.className='ripple';
+    const rect=this.getBoundingClientRect();
+    const size=Math.max(rect.width,rect.height);
+    r.style.cssText=`width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px`;
+    this.appendChild(r);setTimeout(()=>r.remove(),600);
   });
-  // Roads
-  ctx.setLineDash([]); ctx.strokeStyle='#FFF'; ctx.lineWidth=9;
-  [[0,.24,1,.24],[0,.47,1,.47],[0,.71,1,.71]].forEach(([x1,y1,x2,y2])=>{ctx.beginPath();ctx.moveTo(x1*mapW,y1*mapH);ctx.lineTo(x2*mapW,y2*mapH);ctx.stroke()});
-  [[.2,0,.2,1],[.44,0,.44,1],[.67,0,.67,1],[.85,0,.85,1]].forEach(([x1,y1,x2,y2])=>{ctx.beginPath();ctx.moveTo(x1*mapW,y1*mapH);ctx.lineTo(x2*mapW,y2*mapH);ctx.stroke()});
-  ctx.strokeStyle='#E5E1DA'; ctx.lineWidth=4;
-  [[0,.1,1,.1],[0,.36,1,.36],[0,.59,1,.59],[0,.84,1,.84]].forEach(([x1,y1,x2,y2])=>{ctx.beginPath();ctx.moveTo(x1*mapW,y1*mapH);ctx.lineTo(x2*mapW,y2*mapH);ctx.stroke()});
-  [[.1,0,.1,1],[.33,0,.33,1],[.56,0,.56,1],[.75,0,.75,1]].forEach(([x1,y1,x2,y2])=>{ctx.beginPath();ctx.moveTo(x1*mapW,y1*mapH);ctx.lineTo(x2*mapW,y2*mapH);ctx.stroke()});
-  ctx.setLineDash([]);
-  // Labels
-  ctx.fillStyle='#AAA'; ctx.font='bold '+Math.max(9,mapW*.014)+'px DM Sans,sans-serif';
-  ctx.fillText('Shankar Nagar',.05*mapW,.22*mapH);
-  ctx.fillText('VIP Road',.05*mapW,.44*mapH);
-  ctx.fillText('Pandri',.05*mapW,.68*mapH);
-  ctx.fillText('Telibandha',.45*mapW,.13*mapH);
-  ctx.fillText('Tatibandh',.68*mapW,.22*mapH);
-  ctx.fillText('Avanti Vihar',.82*mapW,.55*mapH);
-}
-
-function drawCarPin(x, y, col, label, isMoving=false) {
-  ctx.save(); ctx.translate(x, y);
-  // Shadow
-  ctx.beginPath(); ctx.ellipse(0,6,10,5,0,0,Math.PI*2);
-  ctx.fillStyle='rgba(0,0,0,.2)'; ctx.fill();
-  // Car body
-  ctx.beginPath(); ctx.roundRect(-11,-8,22,15,4);
-  ctx.fillStyle=col; ctx.fill();
-  // Windshield
-  ctx.beginPath(); ctx.roundRect(-8,-6,16,9,2);
-  ctx.fillStyle='rgba(255,255,255,.65)'; ctx.fill();
-  // Wheels
-  ctx.fillStyle='#222';
-  [[-9,7],[9,7],[-9,-8],[9,-8]].forEach(([wx,wy])=>{ctx.beginPath();ctx.arc(wx,wy,2.8,0,Math.PI*2);ctx.fill()});
-  // Moving pulse
-  if (isMoving) {
-    const r = 18 + 5 * Math.sin(Date.now()/400);
-    ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2);
-    ctx.strokeStyle = col+'55'; ctx.lineWidth=2; ctx.stroke();
-  }
-  // Label
-  if (label) {
-    ctx.fillStyle='rgba(15,23,42,.8)'; ctx.font='bold 9px Sora,sans-serif'; ctx.textAlign='center';
-    ctx.roundRect(-label.length*3.2,-20,label.length*6.4+4,14,4); ctx.fill();
-    ctx.fillStyle='white'; ctx.fillText(label,0,-9);
-  }
-  ctx.restore();
-}
-
-function drawPin(x, y, col, ico='') {
-  ctx.save(); ctx.translate(x,y);
-  ctx.shadowColor='rgba(0,0,0,.3)'; ctx.shadowBlur=8; ctx.shadowOffsetY=4;
-  ctx.fillStyle=col;
-  ctx.beginPath(); ctx.arc(0,-20,12,0,Math.PI*2); ctx.fill();
-  ctx.strokeStyle='white'; ctx.lineWidth=2.5; ctx.stroke();
-  ctx.shadowBlur=0; ctx.shadowOffsetY=0;
-  ctx.beginPath(); ctx.moveTo(-8,-12); ctx.lineTo(0,0); ctx.lineTo(8,-12);
-  ctx.fillStyle=col; ctx.fill();
-  if (ico) {
-    ctx.font='11px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(ico,0,-20);
-  } else {
-    ctx.beginPath(); ctx.arc(0,-20,4,0,Math.PI*2);
-    ctx.fillStyle='white'; ctx.fill();
-  }
-  ctx.restore();
-}
-
-function drawRoute(x1,y1,x2,y2,col,dashed=false) {
-  ctx.save();
-  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
-  ctx.strokeStyle=col+'44'; ctx.lineWidth=7; ctx.lineCap='round'; ctx.setLineDash([]); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
-  ctx.strokeStyle=col; ctx.lineWidth=3;
-  if (dashed) { ctx.setLineDash([10,8]); ctx.lineDashOffset=-(Date.now()/80%18); }
-  ctx.stroke(); ctx.setLineDash([]); ctx.restore();
-}
-
-function renderMap() {
-  ctx.clearRect(0,0,mapW,mapH);
-  drawBaseMap();
-  // Draw all drivers
-  const displayed = db ? drivers : demoDrivers;
-  displayed.forEach(d => {
-    if (!d.location || d.status==='offline') return;
-    const p = latLngToXY(d.location.lat, d.location.lng);
-    const col = d.status==='on_trip' ? '#059669' : d.status==='online' ? '#1D4ED8' : '#D97706';
-    const initials = d.name.split(' ').map(x=>x[0]).join('').slice(0,2);
-    drawCarPin(p.x, p.y, col, initials, d.status==='online'||d.status==='on_trip');
-  });
-  // Active ride tracking
-  if (activeTracking) {
-    const { driverLoc, userLoc } = activeTracking;
-    if (driverLoc) {
-      const dp = latLngToXY(driverLoc.lat, driverLoc.lng);
-      drawCarPin(dp.x, dp.y, '#059669', '🚗', true);
-    }
-    if (userLoc) {
-      const up = latLngToXY(userLoc.lat, userLoc.lng);
-      drawPin(up.x, up.y, '#DC2626', '👤');
-    }
-    if (driverLoc && userLoc) {
-      const dp = latLngToXY(driverLoc.lat, driverLoc.lng);
-      const up = latLngToXY(userLoc.lat, userLoc.lng);
-      drawRoute(dp.x,dp.y,up.x,up.y,'#059669',true);
-    }
-  }
-  animFrame = requestAnimationFrame(renderMap);
-}
-
-// ══════════════════════════════════════ LOAD DATA
-function loadAll() {
-  loadBookings(); loadDrivers(); loadAlerts();
-  showToast('🔄 Data refreshed');
-}
-
-function loadBookings() {
-  if (db) {
-    db.ref('bookings').orderByChild('createdAt').limitToLast(30).on('value', snap => {
-      bookings = [];
-      snap.forEach(c => bookings.unshift({id:c.key,...c.val()}));
-      renderBookings();
-      updateHeaderStats();
-    });
-  } else {
-    // Demo bookings
-    if (bookings.length === 0) {
-      bookings = [
-        {id:'BK001',name:'Nihal Chandrakar',phone:'9893302783',pickup:'Shankar Nagar, Raipur',destination:'VIP Road, Raipur',package:'3 Hours — ₹600',fare:'₹600',status:'pending',createdAt:new Date(Date.now()-300000).toISOString()},
-        {id:'BK002',name:'Priya Sahu',phone:'9111234567',pickup:'Telibandha Circle, Raipur',destination:'Pandri Hospital',package:'Hospital / Emergency',fare:'₹500',status:'pending',createdAt:new Date(Date.now()-120000).toISOString()},
-        {id:'BK003',name:'Rahul Mishra',phone:'9876543210',pickup:'Tatibandh, Raipur',destination:'Airport, Raipur',package:'1 Hour — ₹300',fare:'₹300',status:'assigned',assignedDriver:'DRV-D001',assignedDriverName:'Rakesh Kumar',createdAt:new Date(Date.now()-600000).toISOString()},
-      ];
-    }
-    renderBookings();
-    updateHeaderStats();
-  }
-}
-
-function loadDrivers() {
-  if (db) {
-    db.ref('drivers').on('value', snap => {
-      drivers = [];
-      snap.forEach(c => drivers.push({id:c.key,...c.val()}));
-      renderDriverRoster();
-      updateHeaderStats();
-    });
-  } else {
-    renderDriverRoster();
-  }
-}
-
-function loadAlerts() {
-  if (db) {
-    db.ref('admin/alerts').orderByChild('time').limitToLast(20).on('value', snap => {
-      const list = document.getElementById('alertsList');
-      list.innerHTML = '';
-      let cnt = 0;
-      snap.forEach(c => {
-        const a = c.val();
-        addAlertUI(`Driver: ${a.driver||'?'} — ${a.msg||a.type}`, a.time ? new Date(a.time).toLocaleTimeString('en-IN') : 'Now');
-        cnt++;
-      });
-      if (!cnt) list.innerHTML = '<div class="empty-s" style="padding:.9rem">No alerts yet.</div>';
-      document.getElementById('alertCount').textContent = cnt;
-      document.getElementById('hAlerts').textContent = cnt;
-    });
-  }
-}
-
-// ══════════════════════════════════════ RENDER BOOKINGS
-function renderBookings() {
-  const el = document.getElementById('bookingsList');
-  document.getElementById('bkCount').textContent = bookings.length;
-  if (!bookings.length) {
-    el.innerHTML = '<div class="empty-s">📭 No bookings yet.<br>Bookings from your website form appear here.</div>';
-    return;
-  }
-  el.innerHTML = '';
-  const displayDrivers = db ? drivers : demoDrivers;
-  bookings.forEach(bk => {
-    const time = bk.createdAt ? new Date(bk.createdAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}) : '';
-    const isAssigned = bk.status === 'assigned' || bk.status === 'in_progress';
-    const card = document.createElement('div');
-    card.className = 'bk-card' + (isAssigned ? ' assigned' : '');
-    card.onclick = () => selectBooking(bk, card);
-
-    const onlineDrivers = displayDrivers.filter(d => d.status === 'online' || d.status === 'available');
-    const driverOptions = onlineDrivers.map(d =>
-      `<option value="${d.id}" ${bk.assignedDriver===d.id?'selected':''}>${d.name} · ${d.city}</option>`
-    ).join('');
-
-    card.innerHTML = `
-      <div class="bk-top">
-        <div>
-          <div class="bk-name">${bk.name||'—'}</div>
-          <div class="bk-time">${time} · ${bk.phone||'—'}</div>
-        </div>
-        <div class="bk-badge ${isAssigned?'bb-assigned':'bb-new'}">${isAssigned?'✅ Assigned':'🔵 New'}</div>
-      </div>
-      <div class="bk-row"><div class="bk-ico">📍</div><div class="bk-txt">${bk.pickup||'—'}</div></div>
-      ${bk.destination?`<div class="bk-row"><div class="bk-ico">🎯</div><div class="bk-txt">${bk.destination}</div></div>`:''}
-      <div class="bk-row"><div class="bk-ico">⏱</div><div class="bk-txt"><div class="bk-pkg">${bk.package||'—'}</div></div></div>
-      ${bk.notes?`<div class="bk-row"><div class="bk-ico">💬</div><div class="bk-txt" style="color:var(--text3)">${bk.notes}</div></div>`:''}
-      <div class="bk-divider"></div>
-      ${isAssigned
-        ? `<div style="font-size:.76rem;color:var(--green);font-weight:600">✅ Assigned to: ${bk.assignedDriverName||'Driver'}</div>
-           <div class="btn-row" style="margin-top:.6rem;display:flex;gap:.5rem">
-             <button class="unassign-btn" onclick="event.stopPropagation();unassignDriver('${bk.id}')">Unassign</button>
-             <button class="assign-btn" style="flex:1;margin-top:0" onclick="event.stopPropagation();startTracking('${bk.id}')">📍 Track Live</button>
-           </div>`
-        : `<div class="assign-section">
-             <div class="assign-label">Assign Driver</div>
-             ${onlineDrivers.length
-               ? `<select class="assign-select" id="sel_${bk.id}" onclick="event.stopPropagation()">
-                    <option value="">— Choose a driver —</option>
-                    ${driverOptions}
-                  </select>
-                  <button class="assign-btn" onclick="event.stopPropagation();assignDriver('${bk.id}')">✅ Assign Driver</button>`
-               : `<div style="font-size:.76rem;color:var(--text3);padding:.4rem 0">No drivers online right now</div>`
-             }
-           </div>`
-      }`;
-    el.appendChild(card);
-  });
-}
-
-// ══════════════════════════════════════ ASSIGN DRIVER
-function assignDriver(bookingId) {
-  const sel = document.getElementById('sel_' + bookingId);
-  if (!sel || !sel.value) { showToast('⚠️ Please select a driver first'); return; }
-  const driverId = sel.value;
-  const displayDrivers = db ? drivers : demoDrivers;
-  const driver = displayDrivers.find(d => d.id === driverId);
-  const booking = bookings.find(b => b.id === bookingId);
-  if (!driver || !booking) return;
-
-  const assignment = {
-    id: bookingId,
-    status: 'assigned',
-    userName: booking.name,
-    userPhone: booking.phone,
-    pickup: booking.pickup,
-    destination: booking.destination,
-    package: booking.package,
-    fare: booking.fare || '₹600',
-    assignedAt: new Date().toISOString()
-  };
-
-  if (db) {
-    // Send assignment to driver
-    db.ref('assignments/' + driverId).set(assignment);
-    // Update booking
-    db.ref('bookings/' + bookingId).update({
-      status: 'assigned',
-      assignedDriver: driverId,
-      assignedDriverName: driver.name,
-      assignedAt: new Date().toISOString()
-    });
-  } else {
-    // Local mode
-    const b = bookings.find(b => b.id === bookingId);
-    if (b) { b.status='assigned'; b.assignedDriver=driverId; b.assignedDriverName=driver.name; }
-    renderBookings();
-  }
-
-  addAlertUI(`✅ ${booking.name} assigned to ${driver.name}`, 'Just now', '🚗');
-  showToast(`✅ ${driver.name} assigned to ${booking.name}`);
-  updateHeaderStats();
-}
-
-function unassignDriver(bookingId) {
-  const bk = bookings.find(b => b.id === bookingId);
-  if (!bk) return;
-  if (!confirm(`Unassign ${bk.assignedDriverName||'driver'} from this booking?`)) return;
-  if (db) {
-    db.ref('assignments/' + bk.assignedDriver).remove();
-    db.ref('bookings/' + bookingId).update({ status:'pending', assignedDriver:null, assignedDriverName:null });
-  } else {
-    bk.status='pending'; bk.assignedDriver=null; bk.assignedDriverName=null;
-    renderBookings();
-  }
-  if (activeTracking && activeTracking.bookingId === bookingId) {
-    activeTracking = null;
-    document.getElementById('trackContent').innerHTML = '<div class="track-empty">Track stopped — driver unassigned.</div>';
-    document.getElementById('trackChip').textContent = 'No Active Ride';
-  }
-  showToast('⚠️ Driver unassigned');
-}
-
-// ══════════════════════════════════════ LIVE TRACKING
-function startTracking(bookingId) {
-  const bk = bookings.find(b => b.id === bookingId);
-  if (!bk) return;
-  const displayDrivers = db ? drivers : demoDrivers;
-  const driver = displayDrivers.find(d => d.id === bk.assignedDriver);
-  if (!driver) { showToast('⚠️ Driver not found'); return; }
-
-  activeTracking = {
-    bookingId,
-    driverId: bk.assignedDriver,
-    driverName: driver.name,
-    driverLoc: driver.location || { lat:21.2512, lng:81.6292 },
-    userLoc: null // User location collected separately
-  };
-
-  document.getElementById('trackChip').textContent = '🔴 Tracking Live';
-  document.getElementById('mapStatusChip').textContent = `📍 Tracking: ${bk.name}`;
-  renderTrackPanel();
-
-  if (db) {
-    // Listen for driver location updates
-    db.ref('drivers/' + bk.assignedDriver + '/location').on('value', snap => {
-      if (snap.val()) {
-        activeTracking.driverLoc = snap.val();
-        renderTrackPanel();
-      }
-    });
-    // Listen for user location (sent during ride)
-    db.ref('rides/' + bookingId + '/userLocation').on('value', snap => {
-      if (snap.val()) {
-        activeTracking.userLoc = snap.val();
-        renderTrackPanel();
-      }
-    });
-  } else {
-    // Simulate driver moving
-    let lat = 21.2512, lng = 81.6292;
-    if (trackInterval) clearInterval(trackInterval);
-    trackInterval = setInterval(() => {
-      lat += (Math.random()-.3)*.0012;
-      lng += (Math.random()-.2)*.0012;
-      if (activeTracking) activeTracking.driverLoc = { lat, lng, updatedAt: new Date().toISOString() };
-      renderTrackPanel();
-    }, 3000);
-  }
-
-  showToast('📍 Live tracking started for ' + bk.name);
-}
-
-function renderTrackPanel() {
-  if (!activeTracking) return;
-  const tc = document.getElementById('trackContent');
-  const bk = bookings.find(b => b.id === activeTracking.bookingId) || {};
-  const dl = activeTracking.driverLoc;
-  const ul = activeTracking.userLoc;
-  const dUpdated = dl?.updatedAt ? new Date(dl.updatedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '—';
-  const dAge = dl?.updatedAt ? Math.floor((Date.now()-new Date(dl.updatedAt))/1000) : 999;
-  const fresh = dAge < 15;
-
-  tc.innerHTML = `
-    <div class="track-driver">
-      <div style="font-size:.68rem;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.6rem">🚗 Driver Location</div>
-      <div class="coord-box">
-        Lat: <span>${dl?.lat?.toFixed(6)||'—'}°N</span><br>
-        Lng: <span>${dl?.lng?.toFixed(6)||'—'}°E</span><br>
-        Accuracy: <span>±${Math.round(dl?.accuracy||0)}m</span><br>
-        Source: <span style="color:var(--green)">Real GPS ✓</span>
-      </div>
-      <div class="loc-update">
-        <div class="lu-time">Updated: ${dUpdated}</div>
-        <div class="lu-badge ${fresh?'lub-ok':'lub-warn'}">${fresh?'● Live':'⚠ Stale'}</div>
-      </div>
-    </div>
-    ${ul ? `
-    <div class="track-driver" style="margin-top:.75rem">
-      <div style="font-size:.68rem;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.6rem">👤 User Location</div>
-      <div class="coord-box">Lat: <span>${ul.lat?.toFixed(6)||'—'}°N</span><br>Lng: <span>${ul.lng?.toFixed(6)||'—'}°E</span></div>
-    </div>` : `
-    <div style="font-size:.74rem;color:var(--text3);padding:.6rem;background:var(--surf);border-radius:9px;margin-top:.75rem;line-height:1.6">
-      👤 User location will appear here once the trip begins and the user shares their position.
-    </div>`}
-    <div class="eta-mini">
-      <div class="eta-m-it"><div class="eta-m-val">${2+Math.floor(Math.random()*8)}</div><div class="eta-m-lbl">Min ETA</div></div>
-      <div class="eta-m-it"><div class="eta-m-val">${(1+Math.random()*3).toFixed(1)}</div><div class="eta-m-lbl">km Away</div></div>
-    </div>
-    <button onclick="stopTracking()" style="width:100%;margin-top:.7rem;background:var(--red-l);color:var(--red);border:1px solid var(--red);border-radius:9px;padding:.6rem;font-family:'Sora',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer">⏹ Stop Tracking</button>`;
-}
-
-function stopTracking() {
-  if (trackInterval) { clearInterval(trackInterval); trackInterval=null; }
-  activeTracking = null;
-  document.getElementById('trackChip').textContent = 'No Active Ride';
-  document.getElementById('trackContent').innerHTML = '<div class="track-empty">👆 Assign a driver to a booking to see live GPS tracking here.</div>';
-  document.getElementById('mapStatusChip').textContent = '⚪ Select a booking to track';
-}
-
-function selectBooking(bk, card) {
-  document.querySelectorAll('.bk-card').forEach(c=>c.classList.remove('selected'));
-  card.classList.add('selected');
-  selectedBooking = bk;
-}
-
-// ══════════════════════════════════════ DRIVER ROSTER
-function renderDriverRoster() {
-  const el = document.getElementById('driversList');
-  const displayDrivers = db ? drivers : demoDrivers;
-  document.getElementById('drvCount').textContent = displayDrivers.length;
-  if (!displayDrivers.length) {
-    el.innerHTML = '<div class="empty-s">No drivers registered yet.<br>Share the Driver App link with your drivers.</div>';
-    return;
-  }
-  el.innerHTML = '';
-  const online = displayDrivers.filter(d=>d.status!=='offline').length;
-  document.getElementById('hOnline').textContent = online;
-
-  displayDrivers.forEach(d => {
-    const initials = d.name.split(' ').map(x=>x[0]).join('').slice(0,2);
-    const age = d.location?.updatedAt ? Math.floor((Date.now()-new Date(d.location.updatedAt))/1000) : 999;
-    const statusCls = d.status==='on_trip'?'ds-trip':d.status==='online'?'ds-online':'ds-offline';
-    const statusLbl = d.status==='on_trip'?'On Trip':d.status==='online'?'Online':'Offline';
-    const colors = ['#1D4ED8','#059669','#D97706','#7C3AED','#0D9488'];
-    const col = colors[d.name.length%colors.length];
-    const div = document.createElement('div');
-    div.className = 'dr-item';
-    div.onclick = () => showDriverDetails(d);
-    div.innerHTML = `
-      <div class="dri-av" style="background:${col}">${initials}</div>
-      <div class="dri-info">
-        <div class="dri-name">${d.name}</div>
-        <div class="dri-sub">${d.vehicle||'—'} · ${d.city||'—'} ${d.status==='online'?`· ${age<30?'Live':'~'+Math.ceil(age/60)+'m ago'}`:''}  </div>
-      </div>
-      <div class="dri-st ${statusCls}">${statusLbl}</div>`;
-    el.appendChild(div);
-  });
-}
-
-function showDriverDetails(d) {
-  const loc = d.location;
-  showToast(`${d.name} · ${d.phone} · ${d.vehicle} · ${d.status.toUpperCase()}`);
-  if (loc) { activeTracking = { ...(activeTracking||{}), driverLoc: loc }; }
-}
-
-// ══════════════════════════════════════ ALERTS
-function addAlertUI(title, time, ico='🚨') {
-  const list = document.getElementById('alertsList');
-  const emptyS = list.querySelector('.empty-s');
-  if (emptyS) emptyS.remove();
-  const div = document.createElement('div');
-  div.className = 'alert-row';
-  div.innerHTML = `<div class="ar-ico">${ico}</div><div><div class="ar-title">${title}</div><div class="ar-time">${time}</div></div>`;
-  list.insertBefore(div, list.firstChild);
-  alerts.unshift({title,time});
-  const cnt = alerts.length;
-  document.getElementById('alertCount').textContent = cnt;
-  document.getElementById('hAlerts').textContent = cnt;
-}
-
-// ══════════════════════════════════════ ADD TEST BOOKING
-function showAddBookingModal() {
-  document.getElementById('addModal').style.display = 'flex';
-}
-function hideModal() {
-  document.getElementById('addModal').style.display = 'none';
-}
-function addTestBooking() {
-  const name = document.getElementById('mb_name').value.trim();
-  const phone = document.getElementById('mb_phone').value.trim();
-  const pickup = document.getElementById('mb_pickup').value.trim();
-  const drop = document.getElementById('mb_drop').value.trim();
-  const pkg = document.getElementById('mb_pkg').value;
-  if (!name||!phone||!pickup) { showToast('⚠️ Name, phone, pickup required'); return; }
-  const newBk = {
-    id:'BK'+Date.now(),
-    name, phone, pickup, destination:drop, package:pkg,
-    fare: '₹' + (pkg.match(/₹(\d+)/)||['','600'])[1],
-    status:'pending', createdAt:new Date().toISOString()
-  };
-  if (db) {
-    db.ref('bookings/'+newBk.id).set(newBk);
-  } else {
-    bookings.unshift(newBk);
-    renderBookings();
-  }
-  hideModal();
-  showToast('✅ Booking added: ' + name);
-  updateHeaderStats();
-}
-
-// ══════════════════════════════════════ STATS
-function updateHeaderStats() {
-  const pending = bookings.filter(b=>b.status==='pending').length;
-  const active = bookings.filter(b=>b.status==='assigned'||b.status==='in_progress').length;
-  document.getElementById('hPending').textContent = pending;
-  document.getElementById('hActive').textContent = active;
-}
-
-// ══════════════════════════════════════ FIREBASE LISTENERS (for website form submissions)
-function listenForWebsiteBookings() {
-  if (!db) return;
-  // Listen to web3forms webhook data stored in Firebase
-  db.ref('bookings').on('child_added', snap => {
-    const bk = {id:snap.key,...snap.val()};
-    if (!bookings.find(b=>b.id===bk.id)) {
-      bookings.unshift(bk);
-      renderBookings();
-      updateHeaderStats();
-      addAlertUI(`📥 New booking: ${bk.name||'?'} — ${bk.pickup||'—'}`, 'Just now', '📥');
-      showToast('📥 New booking from ' + (bk.name||'website'));
-    }
-  });
-}
-
-// ══════════════════════════════════════ MAP CONTROLS
-function zoom(f) { mapZoomF *= f; }
-function resetView() { mapZoomF = 1; }
-
-// ══════════════════════════════════════ TOAST
-function showToast(msg, dur=3000) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), dur);
-}
-
-// ══════════════════════════════════════ INIT
-window.addEventListener('load', () => {
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-  renderMap();
-  loadAll();
-  listenForWebsiteBookings();
-
-  // Auto-refresh roster every 10s
-  setInterval(() => { loadDrivers(); updateHeaderStats(); }, 10000);
 });
-</script>
 
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+/* ── HERO CANVAS ── */
+(function(){
+  const canvas=document.getElementById('heroCanvas');
+  const ctx=canvas.getContext('2d');
+  let W,H,particles=[];
+  function resize(){W=canvas.width=canvas.offsetWidth;H=canvas.height=canvas.offsetHeight}
+  resize();window.addEventListener('resize',resize,{passive:true});
+  class Particle{
+    constructor(){this.reset()}
+    reset(){this.x=Math.random()*W;this.y=Math.random()*H;this.size=Math.random()*2+0.5;this.speedX=(Math.random()-0.5)*0.4;this.speedY=(Math.random()-0.5)*0.4;this.opacity=Math.random()*0.5+0.1;this.life=Math.random()*200+100;this.maxLife=this.life;}
+    update(){this.x+=this.speedX;this.y+=this.speedY;this.life--;if(this.life<=0||this.x<0||this.x>W||this.y<0||this.y>H)this.reset();}
+    draw(){const a=(this.life/this.maxLife)*this.opacity;ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);ctx.fillStyle=`rgba(201,153,58,${a})`;ctx.fill();}
+  }
+  for(let i=0;i<60;i++)particles.push(new Particle());
+  function animate(){ctx.clearRect(0,0,W,H);particles.forEach(p=>{p.update();p.draw()});for(let i=0;i<particles.length;i++){for(let j=i+1;j<particles.length;j++){const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y;const dist=Math.sqrt(dx*dx+dy*dy);if(dist<120){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle=`rgba(201,153,58,${0.05*(1-dist/120)})`;ctx.lineWidth=0.5;ctx.stroke();}}}requestAnimationFrame(animate);}
+  animate();
+})();
+
+/* ── MAGNETIC BUTTONS ── */
+if(window.innerWidth>768){
+  document.querySelectorAll('.mag-btn').forEach(btn=>{
+    btn.addEventListener('mousemove',function(e){const rect=this.getBoundingClientRect();const x=e.clientX-rect.left-rect.width/2;const y=e.clientY-rect.top-rect.height/2;this.style.transform=`translate(${x*0.18}px,${y*0.25}px)`;});
+    btn.addEventListener('mouseleave',function(){this.style.transform='';});
+  });
+}
+
+/* ── BOOKING FORM ── */
+document.getElementById('bookingForm').addEventListener('submit',async function(e){
+  e.preventDefault();
+  let valid=true;
+  [{id:'f_pickup',err:'e_pickup',check:v=>v.trim().length>1},
+   {id:'f_pkg',err:'e_pkg',check:v=>v!==''},
+   {id:'f_name',err:'e_name',check:v=>v.trim().length>1},
+   {id:'f_phone',err:'e_phone',check:v=>/^\d{10}$/.test(v)}
+  ].forEach(f=>{
+    const el=document.getElementById(f.id),err=document.getElementById(f.err);
+    if(!f.check(el.value)){el.style.borderColor='var(--red)';err.style.display='block';valid=false}
+    else{el.style.borderColor='';err.style.display='none'}
+  });
+  if(!valid)return;
+
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true;
+  if(!document.getElementById('spinStyle')){const s=document.createElement('style');s.id='spinStyle';s.textContent='@keyframes spin{to{transform:rotate(360deg)}}';document.head.appendChild(s);}
+  btn.innerHTML='<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(8,7,10,0.3);border-top-color:var(--ink);border-radius:50%;animation:spin 0.7s linear infinite"></span> Saving…';
+
+  const bookingData = {
+    name: document.getElementById('f_name').value.trim(),
+    phone: document.getElementById('f_phone').value.trim(),
+    pickup: document.getElementById('f_pickup').value.trim(),
+    destination: document.getElementById('f_drop').value.trim() || 'Not specified',
+    package: document.getElementById('f_pkg').value,
+    datetime: document.getElementById('f_dt').value || 'Not specified',
+    notes: document.getElementById('f_notes').value.trim() || '',
+    status: 'new',
+    source: 'website',
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    createdAtIST: new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})
+  };
+
+  try {
+    await db.collection('bookings').add(bookingData);
+    showSuccess();
+  } catch(err) {
+    console.error('Firebase error:', err);
+    fallbackWA();
+    btn.disabled=false;
+    btn.innerHTML='<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg> Confirm Booking Request';
+  }
+});
+
+function showSuccess(){
+  document.getElementById('successPhone').textContent=document.getElementById('f_phone').value;
+  document.getElementById('waFollowBtn').href='https://wa.me/919111473929?text='+encodeURIComponent(buildWAMsg());
+  document.getElementById('bookFormWrap').style.display='none';
+  document.getElementById('bookSuccess').style.display='block';
+}
+function fallbackWA(){window.open('https://wa.me/919111473929?text='+encodeURIComponent(buildWAMsg()),'_blank');}
+function resetForm(){
+  document.getElementById('bookSuccess').style.display='none';
+  document.getElementById('bookFormWrap').style.display='block';
+  document.getElementById('bookingForm').reset();
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=false;
+  btn.innerHTML='<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg> Confirm Booking Request';
+}
+document.getElementById('f_phone').addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,10)});
+
+/* ── AI CHAT ── */
+const SYSTEM=`You are the AI assistant for DriveBuddy — Chhattisgarh's first driver-on-demand platform. Contact: 9111473929. Cities: Raipur, Bhilai, Durg, Bilaspur. Prices: 1hr ₹300, 3hr ₹600, Full Day ₹1000-1200, Outstation ₹1200-1500, Night ₹500. All drivers police-verified, breathalyzer tested, 5+ years experience. Available 24x7. Also hiring drivers — send to hire.html. Be warm, concise, helpful. Reply in same language as user.`;
+let chatOpen=false,chatStreaming=false;
+document.getElementById('initTime').textContent=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+function getT(){return new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,90)+'px'}
+function toggleChat(){
+  chatOpen=!chatOpen;
+  const p=document.getElementById('chatPanel');
+  if(chatOpen){p.style.display='flex';requestAnimationFrame(()=>p.classList.add('open'));setTimeout(()=>document.getElementById('chatInp').focus(),400)}
+  else{p.classList.remove('open');setTimeout(()=>p.style.display='none',400)}
+}
+function addMsg(text,role){
+  const msgs=document.getElementById('chatMsgs'),wrap=document.createElement('div');
+  wrap.className='msg-wrap '+(role==='bot'?'bot-wrap':'user-wrap');
+  if(role==='bot'){
+    const av=document.createElement('div');av.className='mini-av';av.innerHTML='<svg width="14" height="14" viewBox="0 0 48 48"><use href="#logo-icon"/></svg>';
+    const inner=document.createElement('div'),d=document.createElement('div');d.className='msg bot';d.innerHTML=text;
+    const t=document.createElement('div');t.className='msg-time';t.textContent=getT();
+    inner.appendChild(d);inner.appendChild(t);wrap.appendChild(av);wrap.appendChild(inner);msgs.appendChild(wrap);msgs.scrollTop=msgs.scrollHeight;return d;
+  }else{
+    const inner=document.createElement('div'),d=document.createElement('div');d.className='msg user';d.textContent=text;
+    const t=document.createElement('div');t.className='msg-time';t.textContent=getT();
+    inner.appendChild(d);inner.appendChild(t);wrap.appendChild(inner);msgs.appendChild(wrap);msgs.scrollTop=msgs.scrollHeight;return d;
+  }
+}
+function addTyping(){
+  const msgs=document.getElementById('chatMsgs'),wrap=document.createElement('div');
+  wrap.className='msg-wrap bot-wrap';wrap.id='typWrap';
+  const av=document.createElement('div');av.className='mini-av';av.innerHTML='<svg width="14" height="14" viewBox="0 0 48 48"><use href="#logo-icon"/></svg>';
+  const d=document.createElement('div');d.className='typing';d.innerHTML='<span></span><span></span><span></span>';
+  wrap.appendChild(av);wrap.appendChild(d);msgs.appendChild(wrap);msgs.scrollTop=msgs.scrollHeight;
+}
+function removeTyping(){const t=document.getElementById('typWrap');if(t)t.remove()}
+function sendQuick(t){document.getElementById('quickBtns').style.display='none';document.getElementById('chatInp').value=t;sendMsg();}
+const chatHistory=[];
+async function sendMsg(){
+  if(chatStreaming)return;
+  const inp=document.getElementById('chatInp'),text=inp.value.trim();
+  if(!text)return;
+  inp.value='';inp.style.height='auto';
+  document.getElementById('quickBtns').style.display='none';
+  addMsg(text,'user');chatHistory.push({role:'user',content:text});
+  chatStreaming=true;document.getElementById('chatSend').disabled=true;addTyping();
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:400,system:SYSTEM,stream:true,messages:chatHistory.slice(-12)})});
+    removeTyping();
+    if(!res.ok){const fb=localReply(text);addMsg(fb,'bot');chatHistory.push({role:'assistant',content:fb});chatStreaming=false;document.getElementById('chatSend').disabled=false;return}
+    const botEl=addMsg('','bot'),reader=res.body.getReader(),dec=new TextDecoder();let full='';
+    while(true){const{done,value}=await reader.read();if(done)break;const chunk=dec.decode(value);for(const line of chunk.split('\n')){if(line.startsWith('data: ')){const data=line.slice(6).trim();if(data==='[DONE]')continue;try{const j=JSON.parse(data);if(j.type==='content_block_delta'&&j.delta?.text){full+=j.delta.text;botEl.innerHTML=full.replace(/\n/g,'<br>');document.getElementById('chatMsgs').scrollTop=99999}}catch(e){}}}}
+    if(full)chatHistory.push({role:'assistant',content:full});else{const fb=localReply(text);botEl.innerHTML=fb;chatHistory.push({role:'assistant',content:fb})}
+  }catch(err){removeTyping();const fb=localReply(text);addMsg(fb,'bot');chatHistory.push({role:'assistant',content:fb})}
+  chatStreaming=false;document.getElementById('chatSend').disabled=false;
+}
+function localReply(q){
+  const l=q.toLowerCase();
+  if(l.match(/price|cost|rate|₹|rupee|kitna/))return '💰 Rates: <strong>1hr ₹300 · 3hr ₹600 · Full Day ₹1000–1200 · Outstation ₹1200–1500 · Night ₹500</strong>. Call <strong>9111473929</strong>.';
+  if(l.match(/driver|join|hire|apply|earn|work/))return '🚘 Want to drive with us? <a href="hire.html" style="color:var(--gold);font-weight:700">Apply here →</a> We call you within 24 hours!';
+  if(l.match(/book|reserve/))return '📅 Use the booking form on this page or call <strong>9111473929</strong>. Driver in 30 min!';
+  if(l.match(/city|cities|raipur|bhilai|durg|bilaspur/))return '📍 We serve <strong>Raipur, Bhilai, Durg &amp; Bilaspur</strong> — 30-min guaranteed arrival!';
+  if(l.match(/night|raat|late/))return '🌙 Night Driver 8PM–6AM at ₹500. Call <strong>9111473929</strong>!';
+  if(l.match(/hospital|medical|emergency/))return '🏥 Emergency priority! Call <strong>9111473929</strong> immediately.';
+  if(l.match(/verify|safe|police/))return '🛡️ All drivers: Govt ID · Police background · Breathalyzer every shift · 5+ yrs experience.';
+  if(l.match(/airport|flight/))return '✈️ Airport service with real-time flight tracking. Call <strong>9111473929</strong>.';
+  if(l.match(/pay|upi|cash/))return '💳 Cash · UPI (GPay/PhonePe/Paytm) · Bank transfer. Zero hidden charges.';
+  return '🚗 Call <strong>9111473929</strong> or use the booking form. Available 24×7!';
+}
+</script>
 </body>
 </html>
